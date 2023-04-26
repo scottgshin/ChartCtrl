@@ -11,14 +11,14 @@ class CChart;
 
 class CPageCtrl : public CButton
 {
-	DECLARE_DYNAMIC(CPageCtrl)
+    DECLARE_DYNAMIC(CPageCtrl)
 
 public:
-	CPageCtrl(bool bEnd = false, bool bRotate = false, UINT idx = 0);
-	virtual ~CPageCtrl();
+    CPageCtrl(bool bEnd = false, bool bRotate = false, UINT idx = 0);
+    virtual ~CPageCtrl();
 
 public:
-  void InitParams(bool bEnd, bool bRotate, UINT idx) 
+  void InitParams(bool bEnd, bool bRotate, UINT idx)
   {m_bEnd = bEnd; m_bRotate = bRotate; m_idx = idx;}
 
 
@@ -27,9 +27,9 @@ protected:
 
 
 protected:
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 
-	afx_msg void OnMouseMove(UINT, CPoint);
+    afx_msg void OnMouseMove(UINT, CPoint);
   afx_msg LRESULT OnMouseLeave(WPARAM, LPARAM);
   afx_msg void OnPaint();
 
@@ -47,14 +47,14 @@ public:
 
 class CChartDataView : public CWnd
 {
-	DECLARE_DYNAMIC(CChartDataView)
+    DECLARE_DYNAMIC(CChartDataView)
 
 public:
-	CChartDataView();
-	virtual ~CChartDataView();
+    CChartDataView();
+    virtual ~CChartDataView();
 
 protected:
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 public:
   size_t GetPagesNmb(void) const { return m_nPages;}
   size_t GetCurrPageNmb(void) const { return m_currPageID + 1;}
@@ -127,7 +127,7 @@ public:
   float m_headerFontHeight;
 
   RectF m_clipRF;
-protected:  
+protected:
   RectF m_headerRF;
   RectF m_rowRF;
   RectF m_nmbRF;

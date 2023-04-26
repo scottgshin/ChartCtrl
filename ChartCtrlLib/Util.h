@@ -35,14 +35,14 @@ inline Rect CRectToGdiRect(CRect& rect)
 
 inline RectF CRectToGdiRectF(CRect& rect)
 {
-  return 
+  return
    RectF(float(rect.left), float(rect.top), float(rect.Width()), float(rect.Height()));
 }
 
 inline CRect RectFToCRect(RectF& rectF)  /// In client coord
 {
   int left = int(max(floor(rectF.X), 0.0f));
-  int top  = int(max(floor(rectF.Y), 0.0f));;
+  int top  = int(max(floor(rectF.Y), 0.0f));
   int right = int(ceil(rectF.GetRight()));
   int bottom = int(ceil(rectF.GetBottom()));
   return CRect(left, top, right, bottom);
@@ -50,17 +50,17 @@ inline CRect RectFToCRect(RectF& rectF)  /// In client coord
 
 inline RectF GdiRectToRectF(Rect rect)
 {
-  return 
+  return
     RectF(float(rect.X), float(rect.Y), float(rect.Width), float(rect.Height));
 }
 
-inline RectF RectFFromCenterF(const PointF pntCenterF, 
+inline RectF RectFFromCenterF(const PointF pntCenterF,
                                                    float fWidth, float fHeight)
 {
   RectF rectF(pntCenterF.X, pntCenterF.Y, 0.0f, 0.0f);
   rectF.Inflate(fWidth/2.0f, fHeight/2.0f);
   return rectF;
-}         
+}
 
 inline PointF GetRectFCenterF(const RectF rectF)
 {
@@ -73,8 +73,8 @@ inline PointF GetRectFCenterF(const RectF rectF)
 inline CPoint CPointFromPntF(PointF pntF)
 {
   CPoint pntC;
-  float fX = pntF.X < 0.0f ? pntF.X - 0.5f : pntF.X + 0.5f;   
-  float fY = pntF.Y < 0.0f ? pntF.Y - 0.5f : pntF.Y + 0.5f;   
+  float fX = pntF.X < 0.0f ? pntF.X - 0.5f : pntF.X + 0.5f;
+  float fY = pntF.Y < 0.0f ? pntF.Y - 0.5f : pntF.Y + 0.5f;
   pntC.x = static_cast<int>(fX);
   pntC.y = static_cast<int>(fY);
   return pntC;
@@ -190,10 +190,10 @@ struct greater_or_equal<T, false>
 };
 
 template <typename T>
-struct in_vicinity 
+struct in_vicinity
 {
   PointT<T> _origPntT, _epsPntT;
-  in_vicinity(PointT<T> origPntT, PointT<T> epsPntT): _origPntT(origPntT), 
+  in_vicinity(PointT<T> origPntT, PointT<T> epsPntT): _origPntT(origPntT),
                               _epsPntT(PointT<T>(abs(epsPntT.X), abs(epsPntT.Y))) {}
   bool operator ()(const PointT<T>& pntT)
   {
@@ -241,7 +241,7 @@ struct time_series_to_pnt
   size_t _idx;
   T _startX;
   T _stepX;
-  time_series_to_pnt(T startX, T stepX) : 
+  time_series_to_pnt(T startX, T stepX) :
               _startX(startX), _stepX(stepX), _idx(0) {}
   inline PointT<T> operator () (const T& valY)
   {
@@ -391,7 +391,7 @@ struct not_inside_range
     if (pntT.Y < _lhs)
       bLeft = true;
     else if (!_bFnd && (pntT.Y == _lhs))
-    { 
+    {
       bLeft = true;
       _bFnd = true;
     }
@@ -418,7 +418,7 @@ struct not_inside_range<T, false>
     if (pntT.X < _lhs)
       bLeft = true;
     else if (!_bFnd && (pntT.X == _lhs))
-    { 
+    {
       bLeft = true;
       _bFnd = true;
     }
@@ -441,7 +441,12 @@ struct get_max_str
     RectF rF;
     PointF pntF(0.0f, 0.0f);
     string_t str = get<Idx>(t);
+#ifdef _UNICODE
     _grPtr->MeasureString(str.c_str(),-1, _pFont, pntF, &rF);
+#else if _MBCS
+    USES_CONVERSION;
+    _grPtr->MeasureString(CA2W(str.c_str()),-1, _pFont, pntF, &rF);
+#endif
     if (rF.Width > _maxRF.Width)
       _maxRF = rF;
   }
@@ -459,7 +464,12 @@ struct get_max_str <string_t, Idx>
   {
     RectF rF;
     PointF pntF(0.0f, 0.0f);
+#ifdef _UNICODE
     _grPtr->MeasureString(str.c_str(),-1, _pFont, pntF, &rF);
+#else if _MBCS
+    USES_CONVERSION;
+    _grPtr->MeasureString(CA2W(str.c_str()),-1, _pFont, pntF, &rF);
+#endif
     if (rF.Width > _maxRF.Width)
       _maxRF = rF;
   }
@@ -469,21 +479,21 @@ struct get_max_str <string_t, Idx>
 // Algorithms
 
 //Find closest to X or Y coord of some origin point; apply to sorted sequences only
-template<class _InIt, class _Pr> 
+template<class _InIt, class _Pr>
 inline _InIt find_nearest(_InIt _First, _InIt _Last, _Pr _Pred)
-{	
- 	_DEBUG_RANGE(_First, _Last);
- 	_DEBUG_POINTER(_Pred);
+{
+    _DEBUG_RANGE(_First, _Last);
+    _DEBUG_POINTER(_Pred);
 
   _InIt _NearestIt = _First; // Find first satisfying _Pred
-	for (; _First != _Last; ++_First)
+    for (; _First != _Last; ++_First)
   {
-		if (_Pred(*_First))
-			break;
+        if (_Pred(*_First))
+            break;
     _NearestIt = _First;
   }
 
-	return (_NearestIt);
+    return (_NearestIt);
 }
 
 // Search for the points with X coordinates closest to, but no inside some X range.
@@ -491,8 +501,8 @@ inline _InIt find_nearest(_InIt _First, _InIt _Last, _Pr _Pred)
 template <class _InIt, class _Pr>
 inline std::pair<_InIt, _InIt> find_border_pnts(_InIt _First, _InIt _Last, _Pr _Pred)
 {
- 	_DEBUG_RANGE(_First, _Last);
- 	_DEBUG_POINTER(_Pred);
+    _DEBUG_RANGE(_First, _Last);
+    _DEBUG_POINTER(_Pred);
 
   std::pair<_InIt, _InIt> pair_res_alg = make_pair(_First, _Last);
   for (; _First != _Last; ++_First )

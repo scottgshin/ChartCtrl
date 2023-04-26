@@ -28,7 +28,7 @@ CChartsXMLSerializer::~CChartsXMLSerializer()
 {
 }
 
-HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName, 
+HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
                     const CChartContainer* pContainer, const string_t chartName, bool bAll)
 {
   if (pContainer->IsContainerEmpty())
@@ -43,14 +43,14 @@ HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
       return S_FALSE;
   }
   else
-    chartIdx = -1;          
+    chartIdx = -1;
 // Has no visible charts or this particular chart is not exist or is not visible
   if (!bAll&&(!pContainer->IsChartVisible(chartIdx)))
     return S_FALSE;
 // Sure the iterator does not point to the end of the map
   MAP_CHARTS::const_iterator itMap = chartIdx == -1 ? pContainer->GetFirstChart() :
                                                         pContainer->FindChart(chartIdx);
- 
+
 // Now begin to built XML file
   CoInitialize(NULL);
 // Global code block for pxmlDoc
@@ -61,7 +61,7 @@ HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
       hr = pxmlDoc.CoCreateInstance(__uuidof(DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
       if (hr != S_OK)
         throw _T("Can't cocreate an instance of pxmlDoc");
-    
+
       _variant_t var_t(false);
       hr = pxmlDoc->put_async(var_t);
       hr |= pxmlDoc->put_validateOnParse(var_t);
@@ -95,7 +95,7 @@ HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
     pxmlDoc->createElement(_bstr_t(_T("Charts")), &pe);
     pe->setAttribute(_bstr_t(_T("xmlns:xsi")),
          _variant_t(_T("http://www.w3.org/2001/XMLSchema-instance")));
-    pe->setAttribute(_bstr_t(_T("xmlns:xsd")), 
+    pe->setAttribute(_bstr_t(_T("xmlns:xsd")),
       _variant_t(_T("http://www.w3.org/2001/XMLSchema")));
     pe->setAttribute(_bstr_t(_T("xmlns")), _variant_t(_T("http://tempuri.org/Network.xsd")));
 
@@ -129,7 +129,7 @@ HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
       CChart* chartPtr = itMap->second;
       if (!bAll && (false == chartPtr->IsChartVisible()))
         continue;   // This is to eliminate hidden charts while iterating over entire container
-                    
+
       ++chartNmb;
 // Get and save chart attributes
       string_t name = chartPtr->GetChartName();
@@ -151,7 +151,7 @@ HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
       double maxY    = chartPtr->GetMaxValY();
 
       size_t pntsNmb = chartPtr->m_vDataPnts.size();
-    
+
       AddWhiteSpaceToNode(pxmlDoc, m_bstr_wsnt, pRoot);
       hr |= pxmlDoc->createElement(_bstr_t(_T("Chart")), &pe);
       pe->setAttribute(_bstr_t(_T("Name")), variant_t(name.c_str()));
@@ -177,7 +177,7 @@ HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
 
       AddWhiteSpaceToNode(pxmlDoc, m_bstr_wsntt, pn);//pRoot);
       hr |= pxmlDoc->createElement(_bstr_t(_T("Chart_Visuals")), &pe);
-      pe->setAttribute(_bstr_t(_T("Visibility")), bVisible ? var_true : var_false); 
+      pe->setAttribute(_bstr_t(_T("Visibility")), bVisible ? var_true : var_false);
       pe->setAttribute(_bstr_t(_T("DashStyle")), variant_t(dashStyle));
       pe->setAttribute(_bstr_t(_T("PenWidth")), variant_t(penWidth));
       pe->setAttribute(_bstr_t(_T("Tension")), variant_t(tension));
@@ -215,7 +215,7 @@ HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
       if (chartIdx > -1)
         break;
     }
- 
+
     AddWhiteSpaceToNode(pxmlDoc, m_bstr_wsnt, pRoot);
     hr |= pxmlDoc->createElement(_bstr_t(_T("ChartNmb")), &pe);
     hr |= pe->setAttribute(_bstr_t(_T("Total")), variant_t(chartNmb));
@@ -230,7 +230,7 @@ HRESULT  CChartsXMLSerializer::ChartDataToXML(const _TCHAR* fileName,
   return hr;
 }
 
-HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pContainer, 
+HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pContainer,
                                                          const MAP_CHARTCOLS& mapCharts, bool bClearCharts)
 {
   size_t selChartsNmb = mapCharts.size();
@@ -248,7 +248,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
       hr = pxmlDoc.CoCreateInstance(__uuidof(DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
       if (hr != S_OK)
         throw _T("Can't cocreate an instance of pxmlDoc");
-    
+
      _variant_t var_t(false);
       hr = pxmlDoc->put_async(var_t);
       hr |= pxmlDoc->put_validateOnParse(var_t);
@@ -266,7 +266,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
     catch(_TCHAR* str)
     {
       CoUninitialize();
-      AfxMessageBox(str, MB_OK|MB_ICONSTOP); 
+      AfxMessageBox(str, MB_OK|MB_ICONSTOP);
       return hr;
     }
 
@@ -309,7 +309,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
       _variant_t vname_t15(_T("Precision_X"));
 
       long pntsNmb = 0;
-      
+
       string_t chName;
       string_t nameX;
       string_t nameY;
@@ -330,7 +330,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
         pNodeList->get_length(&nodeListLen);
         if (nodeListLen == 0)
           throw _T("File has no node 'Container'");
-      
+
         hr = pNodeList->get_item(0, &pNode);
         pNodeList->Release();
        if (hr == S_OK)
@@ -344,7 +344,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
          }
        }
        pAttrMap->Release();
-      
+
        if (hr != S_OK)
          throw _T("Can't read axis_X name");
       }
@@ -362,7 +362,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
 
       V_CHARTDATAD vData;
       typedef std::map<string_t, Color> MAP_XML;
-      MAP_XML::const_iterator itNm, itNmB = mapCharts.cbegin();;
+      MAP_XML::const_iterator itNm, itNmB = mapCharts.cbegin();
       MAP_XML::const_iterator itNmE = mapCharts.cend();
 
       for (int chartCnt = 0; chartCnt < chartsNmb; ++chartCnt)
@@ -399,11 +399,11 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
             pChildNode->Release();
             if (hr == S_OK)
             {
-              get_attrValue(vname_t13.bstrVal, pAttrMap, res); 
+              get_attrValue(vname_t13.bstrVal, pAttrMap, res);
               bVisible = res == _bstr_t(_T("false")) ? false : true;
-              get_attrValue(vname_t6.bstrVal, pAttrMap, dashStyle);    
+              get_attrValue(vname_t6.bstrVal, pAttrMap, dashStyle);
               get_attrValue(vname_t7.bstrVal, pAttrMap, penWidth);
-              get_attrValue(vname_t8.bstrVal, pAttrMap, tension);   
+              get_attrValue(vname_t8.bstrVal, pAttrMap, tension);
               pAttrMap->Release();
             }
           }
@@ -433,7 +433,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
                   if (hr == S_OK)
                   {
                     get_attrValue(vname_t9.bstrVal, pAttrMap, X);
-                    get_attrValue(vname_t10.bstrVal, pAttrMap, Y);    
+                    get_attrValue(vname_t10.bstrVal, pAttrMap, Y);
                     if (hr == S_OK)
                       vData[pntsCnt] = PointD(X, Y);
                   }
@@ -452,7 +452,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
             pContainer->SetAxisXName(nameX);
             pContainer->SetContainerPrecision(precisionX);
           }
-          pContainer->AddChart(true, true, chName, nameY, precisionY, DashStyle(dashStyle), 
+          pContainer->AddChart(true, true, chName, nameY, precisionY, DashStyle(dashStyle),
                                                               penWidth, tension, chColor, vData);
       }
       pNodeList->Release();
@@ -460,7 +460,7 @@ HRESULT CChartsXMLSerializer::XMLToCharts(LPCTSTR fileName, CChartContainer* pCo
     catch(_TCHAR* str)
     {
       CoUninitialize();
-      AfxMessageBox(str, MB_OK|MB_ICONSTOP); 
+      AfxMessageBox(str, MB_OK|MB_ICONSTOP);
       return S_FALSE;
     }
   }
@@ -483,7 +483,7 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_CHA
       hr = pxmlDoc.CoCreateInstance(__uuidof(DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
       if (hr != S_OK)
         throw _T("Can't cocreate an instance of pxmlDoc");
-    
+
      _variant_t var_t(false);
       hr = pxmlDoc->put_async(var_t);
       hr |= pxmlDoc->put_validateOnParse(var_t);
@@ -501,7 +501,7 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_CHA
     catch(_TCHAR* str)
     {
       CoUninitialize();
-      AfxMessageBox(str, MB_OK|MB_ICONSTOP); 
+      AfxMessageBox(str, MB_OK|MB_ICONSTOP);
       return hr;
     }
 
@@ -567,10 +567,10 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_CHA
               pChildNode->Release();
               if (hr == S_OK)
               {
-                get_attrValue(vname_t2.bstrVal, pAttrMap, nA);    
-                get_attrValue(vname_t3.bstrVal, pAttrMap, nR);    
+                get_attrValue(vname_t2.bstrVal, pAttrMap, nA);
+                get_attrValue(vname_t3.bstrVal, pAttrMap, nR);
                 get_attrValue(vname_t4.bstrVal, pAttrMap, nG);
-                get_attrValue(vname_t5.bstrVal, pAttrMap, nB);    
+                get_attrValue(vname_t5.bstrVal, pAttrMap, nB);
               }
               pAttrMap->Release();
               if (hr == S_OK)
@@ -585,7 +585,7 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_CHA
     catch(_TCHAR* str)
     {
       CoUninitialize();
-      AfxMessageBox(str, MB_OK|MB_ICONSTOP); 
+      AfxMessageBox(str, MB_OK|MB_ICONSTOP);
       return S_FALSE;
     }
  }
@@ -608,7 +608,7 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_NAM
       hr = pxmlDoc.CoCreateInstance(__uuidof(DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
       if (hr != S_OK)
         throw _T("Can't cocreate an instance of pxmlDoc");
-    
+
      _variant_t var_t(false);
       hr = pxmlDoc->put_async(var_t);
       hr |= pxmlDoc->put_validateOnParse(var_t);
@@ -626,7 +626,7 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_NAM
     catch(_TCHAR* str)
     {
       CoUninitialize();
-      AfxMessageBox(str, MB_OK|MB_ICONSTOP); 
+      AfxMessageBox(str, MB_OK|MB_ICONSTOP);
       return hr;
     }
 
@@ -661,7 +661,7 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_NAM
       pNodeList->get_length(&nodeListLen);
       if (nodeListLen == 0)
         throw _T("File has no node 'Container'");
-      
+
       hr = pNodeList->get_item(0, &pNode);
       pNodeList->Release();
       if (hr == S_OK)
@@ -672,7 +672,7 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_NAM
           get_attrValue(vname_t2.bstrVal, pAttrMap, nameX);
       }
       pAttrMap->Release();
-      
+
       if (hr != S_OK)
         throw _T("Can't read axis_X name");
 
@@ -709,7 +709,7 @@ HRESULT CChartsXMLSerializer::GetChartNamesFromXMLFile(LPCTSTR fileName, MAP_NAM
     catch(_TCHAR* str)
     {
       CoUninitialize();
-      AfxMessageBox(str, MB_OK|MB_ICONSTOP); 
+      AfxMessageBox(str, MB_OK|MB_ICONSTOP);
       return S_FALSE;
     }
  }
@@ -732,7 +732,7 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
       hr = pxmlDoc.CoCreateInstance(__uuidof(DOMDocument60), NULL, CLSCTX_INPROC_SERVER);
       if (hr != S_OK)
         throw _T("Can't cocreate an instance of pxmlDoc");
-    
+
       _variant_t var_t(false);
       hr = pxmlDoc->put_async(var_t);
       hr |= pxmlDoc->put_validateOnParse(var_t);
@@ -750,7 +750,7 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
     catch(_TCHAR* str)
     {
       CoUninitialize();
-      AfxMessageBox(str, MB_OK|MB_ICONSTOP); 
+      AfxMessageBox(str, MB_OK|MB_ICONSTOP);
       return hr;
     }
 
@@ -802,7 +802,7 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
       }
       if (hr != S_OK)
         throw _T("Can't get container params");
- 
+
       hr = pxmlDoc->getElementsByTagName(_bstr_t(_T("Chart")), &pNodeList);
       if (hr == S_OK)
         pNodeList->get_length(&nodeListLen);
@@ -827,7 +827,7 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
       _variant_t vname_t14(_T("Name_S"));
 
       long pntsNmb = 0;
-      
+
       string_t chName;
       string_t name_X;
       string_t nameY;
@@ -883,7 +883,7 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
             pAttrMap->Release();
           }
           if (hr == S_OK)
-            chColor = Color(alphaC, redC, greenC, blueC); 
+            chColor = Color(alphaC, redC, greenC, blueC);
           else
             throw _T("Can't get chart color");
 
@@ -896,11 +896,11 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
             pChildNode->Release();
             if (hr == S_OK)
             {
-              get_attrValue(vname_t13.bstrVal, pAttrMap, res); 
+              get_attrValue(vname_t13.bstrVal, pAttrMap, res);
               bVisible = res == _bstr_t(_T("false")) ? false : true;
-              get_attrValue(vname_t6.bstrVal, pAttrMap, dashStyle);    
+              get_attrValue(vname_t6.bstrVal, pAttrMap, dashStyle);
               get_attrValue(vname_t7.bstrVal, pAttrMap, penWidth);
-              get_attrValue(vname_t8.bstrVal, pAttrMap, tension);   
+              get_attrValue(vname_t8.bstrVal, pAttrMap, tension);
               pAttrMap->Release();
             }
           }
@@ -930,7 +930,7 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
                   if (hr == S_OK)
                   {
                     get_attrValue(vname_t9.bstrVal, pAttrMap, X);
-                    get_attrValue(vname_t10.bstrVal, pAttrMap, Y);    
+                    get_attrValue(vname_t10.bstrVal, pAttrMap, Y);
                     vData[pntsCnt] = PointD(X, Y);
                   }
                   pAttrMap->Release();
@@ -941,8 +941,8 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
           }
           if (hr != S_OK)
             throw _T("Can't read data point");
-        
-          pContainer->AddChart(bVisible, true, chName, nameY, precisionY, DashStyle(dashStyle), 
+
+          pContainer->AddChart(bVisible, true, chName, nameY, precisionY, DashStyle(dashStyle),
                                                               penWidth, tension, chColor, vData);
         }
       }
@@ -954,7 +954,7 @@ HRESULT CChartsXMLSerializer::ReplaceChartsFromXMLFile(LPCTSTR fileName, CChartC
     catch(_TCHAR* str)
     {
       CoUninitialize();
-      AfxMessageBox(str, MB_OK|MB_ICONSTOP); 
+      AfxMessageBox(str, MB_OK|MB_ICONSTOP);
       return S_FALSE;
     }
   }

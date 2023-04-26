@@ -6,6 +6,18 @@
 
 #pragma once
 
+//#include <tchar.h>
+#include <vector>
+#include <deque>
+#include <map>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <tuple>
+#include <random>
+#include "gdiplus.h"
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
@@ -20,7 +32,7 @@
 #define STRFILENAME        _T("ChartCtrlLib.lib")
 #define STRPRODNAME        _T("ChartCtrlLib")
 
-template <typename T> 
+template <typename T>
 class PointT
 {
 public:
@@ -65,21 +77,21 @@ public:
                             { m_offsX += offsX*m_scX; m_offsY += offsY*m_scY; }
   void Scale(double scX, double scY) { m_scX *= scX; m_scY *= scY; }
 
-// Operations on matrixD; if the matrix is not invertible, returns false  
-  bool Invert(void) 
-  { 
+// Operations on matrixD; if the matrix is not invertible, returns false
+  bool Invert(void)
+  {
     if (m_scX*m_scY == 0.0)
       return false;
 
     m_offsX = -m_offsX/m_scX;
-    m_offsY = -m_offsY/m_scY;  
+    m_offsY = -m_offsY/m_scY;
     m_scX = 1.0/m_scX;
     m_scY = 1.0/m_scY;
     return true;
   }
 
   MatrixD* Clone(void)
-  { 
+  {
     MatrixD* pMatrix = new MatrixD;
     pMatrix->m_scX = m_scX;
     pMatrix->m_scY = m_scY;
@@ -123,7 +135,7 @@ typedef struct transform_and_cast_to_pntF
   double _locScY;
   MatrixD* _pMatrixD;
 
-  transform_and_cast_to_pntF(double locScY, MatrixD* pMatrixD) : 
+  transform_and_cast_to_pntF(double locScY, MatrixD* pMatrixD) :
                               _locScY(locScY), _pMatrixD(pMatrixD) {}
   inline Gdiplus::PointF operator() (const PointD& pntD)
   {
@@ -170,7 +182,7 @@ typedef std::vector<string_t> V_VALSTRINGS;
 typedef std::vector<Gdiplus::PointF> V_CHARTDATAF;
 typedef std::multimap<int, PointD> MAP_SELPNTSD;
 
-// Used to count multiple Y values for the same X: 
+// Used to count multiple Y values for the same X:
 // the first member is the iterator to the first occurence, the second is the count
 typedef std::pair<V_CHARTDATAD::iterator, int> PAIR_ITNEAREST;
 
@@ -231,11 +243,11 @@ typedef struct tagNMCHART
 #define CHART_PNTSTRSH 6.0f
 
 // Defs for CChart container
-enum CH_MODE {MODE_FULLX,   MODE_FULLY, MODE_ZOOMINGX, MODE_ZOOMINGY, 
-              MODE_ZOOMX,   MODE_ZOOMY, MODE_MOVEY,    MODE_ZOOMEDX,  
-              MODE_ZOOMEDY, MODE_MOVEDY}; 
+enum CH_MODE {MODE_FULLX,   MODE_FULLY, MODE_ZOOMINGX, MODE_ZOOMINGY,
+              MODE_ZOOMX,   MODE_ZOOMY, MODE_MOVEY,    MODE_ZOOMEDX,
+              MODE_ZOOMEDY, MODE_MOVEDY};
 
-// Data view: Data Window size 7.4" x 9.1" for resolution 96 dpi 
+// Data view: Data Window size 7.4" x 9.1" for resolution 96 dpi
 #define DV_RECTW                 710
 #define DV_RECTH                 874
 #define DV_SPACE                  50
@@ -245,7 +257,7 @@ enum CH_MODE {MODE_FULLX,   MODE_FULLY, MODE_ZOOMINGX, MODE_ZOOMINGY,
 #define IDC_DV_RIGHTENDARR      37602
 #define IDC_DV_RIGHTARR         37603
 #define IDC_DV_BTNPRINT         37604
-#define IDC_DV_BTNCLOSE         37605     
+#define IDC_DV_BTNCLOSE         37605
 
 // For chartContainer context menu
 #define IDM_CHART_LEGEND        33771
@@ -299,7 +311,7 @@ enum CH_MODE {MODE_FULLX,   MODE_FULLY, MODE_ZOOMINGX, MODE_ZOOMINGY,
 typedef string_t (__stdcall *val_label_str_fn)(double val, int precision, bool bAddEqSign);
 
 enum TUPLE_LIDX {IDX_LNAME, IDX_LNAMEX, IDX_LX, IDX_LNAMEY, IDX_LY, IDX_LCOLOR, IDX_LDASH, IDX_LPEN};
-typedef std::tuple<string_t, string_t,string_t, string_t, string_t, Gdiplus::Color, 
+typedef std::tuple<string_t, string_t,string_t, string_t, string_t, Gdiplus::Color,
                                  Gdiplus::DashStyle, float> TUPLE_LABEL;
 typedef std::multimap<int, TUPLE_LABEL> MAP_LABSTR;
 typedef std::vector<TUPLE_LABEL> V_LABSTR;
@@ -310,22 +322,22 @@ enum AX_YPOS{TOP, MIDDLE, BOTTOM};
 typedef std::pair<AX_YPOS, float> PAIR_XAXPOS;
 typedef std::pair<AX_XPOS, float> PAIR_YAXPOS;
 
-enum DATAVIEW_FLAGS{F_NODATACHANGE = 0, F_NAME = 0x0001, F_NAMEX = 0x0002, F_NAMEY = 0x0004, F_VALX = 0x0008, 
-   F_VALY = 0x0010, F_DSIZE = 0x0020, F_APPEND = 0x0040, F_TRUNCATE = 0x0080, F_REPLACE = 0x0100, F_HASCELLSMAP = 0x0200}; 
+enum DATAVIEW_FLAGS{F_NODATACHANGE = 0, F_NAME = 0x0001, F_NAMEX = 0x0002, F_NAMEY = 0x0004, F_VALX = 0x0008,
+   F_VALY = 0x0010, F_DSIZE = 0x0020, F_APPEND = 0x0040, F_TRUNCATE = 0x0080, F_REPLACE = 0x0100, F_HASCELLSMAP = 0x0200};
 
 
 // Enum and typedefs for chart printing
-enum STR_IDX {IDX_NAME, IDX_SCY, IDX_VAL, IDX_NAMEX,IDX_X, IDX_NAMEY, 
+enum STR_IDX {IDX_NAME, IDX_SCY, IDX_VAL, IDX_NAMEX,IDX_X, IDX_NAMEY,
                                    IDX_Y, IDX_COL, IDX_DSTYLE, IDX_PWIDTH, IDX_STRTOTAL};
 enum PRNLAY_IDX {IDX_BULLETSTART = IDX_Y + 1, IDX_STEPSY};
 
 #define STEPY_VALSTR 0x0001
 #define STEPY_VALY   0x0002
 
-typedef std::tuple<float, float, float, float, float, 
-                                                  float, float, float, int> TUPLE_PRNLEGLAYOUT; 
+typedef std::tuple<float, float, float, float, float,
+                                                  float, float, float, int> TUPLE_PRNLEGLAYOUT;
 
-typedef std::tuple<string_t, string_t, string_t, string_t, string_t, string_t, string_t, 
+typedef std::tuple<string_t, string_t, string_t, string_t, string_t, string_t, string_t,
                                                  Gdiplus::Color, Gdiplus::DashStyle, float> TUPLE_PRINT;
 typedef std::multimap<int, TUPLE_PRINT> MAP_PRNDATA;
 

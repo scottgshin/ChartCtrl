@@ -29,11 +29,11 @@ string_t __stdcall GetLabelValStr(double val, int precision, bool bAddEqSign)
 ///////////////////////////////////////////////////////////////////////////////
 // struct CChart
 
-CChart::CChart(void) : m_bVisible(true), m_bSelected(false), m_bShowPnts(true), 
-                       m_nIdx(-1), m_colChart((ARGB)Color::Black), m_dashStyle(DashStyleSolid), 
-                       m_fPenWidth(2), m_fTension(0.0f), 
-                       m_fMinValX(DBL_MAX), m_fMaxValX(-DBL_MAX), m_fMinValY(DBL_MAX ),m_fMaxValY(-DBL_MAX), 
-                       m_precisionY(3),  m_fLocScaleY(1.0), 
+CChart::CChart(void) : m_bVisible(true), m_bSelected(false), m_bShowPnts(true),
+                       m_nIdx(-1), m_colChart((ARGB)Color::Black), m_dashStyle(DashStyleSolid),
+                       m_fPenWidth(2), m_fTension(0.0f),
+                       m_fMinValX(DBL_MAX), m_fMaxValX(-DBL_MAX), m_fMinValY(DBL_MAX ),m_fMaxValY(-DBL_MAX),
+                       m_precisionY(3),  m_fLocScaleY(1.0),
                        m_label(_T("")), m_labelY(string_t(_T("Y"))),
                        m_pLabYValStrFn(&GetLabelValStr)
 {
@@ -119,7 +119,7 @@ size_t CChart::AppendChartData(V_CHARTDATAD& vData)
     double oldEndX = oldEndPntD.X;
     itStart = find_if(itStart, vData.end(), greater_or_equal<double, false>(oldEndX));
     if (itStart != vData.end()) // Find the first not a dublicate
-    { 
+    {
       while ((itStart != vData.end())&&(oldEndPntD.X == itStart->X))
       {
         if (oldEndPntD.Y != itStart->Y)
@@ -134,9 +134,9 @@ size_t CChart::AppendChartData(V_CHARTDATAD& vData)
 // Resize and copy
   size_t oldSize = m_vDataPnts.size();
   size_t sizeNew = oldSize + distance(itStart, vData.end());
-  m_vDataPnts.resize(sizeNew);   
+  m_vDataPnts.resize(sizeNew);
   copy(itStart, vData.end(), m_vDataPnts.begin() + oldSize);
-  
+
 // Correct minmaxes
   m_fMinValX = m_vDataPnts.front().X; // Just in case; it was not changed
   m_fMaxValX = m_vDataPnts.back().X;
@@ -144,7 +144,7 @@ size_t CChart::AppendChartData(V_CHARTDATAD& vData)
     minmax_element(m_vDataPnts.begin(), m_vDataPnts.end(), less_pnt<double, true>());
   m_fMinValY = pair_minmaxY.first->Y;
   m_fMaxValY = pair_minmaxY.second->Y;
-  return sizeNew - oldSize; 
+  return sizeNew - oldSize;
 }
 
 bool CChart::TruncateChartData(double startX, double endX)
@@ -155,7 +155,7 @@ bool CChart::TruncateChartData(double startX, double endX)
     return false;
   if ((m_fMinValX >= startX) && (m_fMaxValX <= endX))
     return false;               // Nothing to truncate
-  
+
   PAIR_ITS pair_its = GetStartEndDataIterators(m_vDataPnts, startX, endX);
 // We need this last point to draw the right end of the chart
   if (pair_its.second != m_vDataPnts.end())
@@ -177,7 +177,7 @@ bool CChart::TruncateChartData(double startX, double endX)
 
     m_vDataPnts.swap(vDataD);
 
-    m_fMinValX = m_vDataPnts.front().X; 
+    m_fMinValX = m_vDataPnts.front().X;
     m_fMaxValX = m_vDataPnts.back().X;
     std::pair<V_CHARTDATAD::iterator, V_CHARTDATAD::iterator> pair_minmaxY =
            minmax_element(m_vDataPnts.begin(), m_vDataPnts.end(), less_pnt<double, true>());
@@ -193,7 +193,7 @@ PAIR_ITNEAREST CChart::GetNearestPointD(const PointD& origPntD, double dist, Poi
   int nmbMultPntsD = 0;
   double leftX = origPntD.X - dist/2.0;
   double rightX = origPntD.X + dist/2.0;
-// Find the first point in distance range from the origPntsD.X, if it exists 
+// Find the first point in distance range from the origPntsD.X, if it exists
   it = find_if(it, itE, coord_in_range<double, false>(leftX, rightX));
   if (it != itE)  // Find closest to origPntD.X
   {
@@ -209,11 +209,11 @@ PAIR_ITNEAREST CChart::GetNearestPointD(const PointD& origPntD, double dist, Poi
 }
 
 // Formats string and prepares chart visuals for the screen; for the print use the container helper
-TUPLE_LABEL CChart::GetSelValString(const PointD selPntD, string_t nameX, 
+TUPLE_LABEL CChart::GetSelValString(const PointD selPntD, string_t nameX,
                                               int precision, val_label_str_fn pLabValXStrFnPtr)
 {
   TUPLE_LABEL tuple_label;
-  get<IDX_LNAME>(tuple_label)  = m_label; 
+  get<IDX_LNAME>(tuple_label)  = m_label;
   get<IDX_LNAMEX>(tuple_label) = nameX;
   bool bAddEqSign = nameX.empty() ? false : true;
   get<IDX_LX>(tuple_label)     = pLabValXStrFnPtr(selPntD.X, precision, bAddEqSign);
@@ -221,7 +221,7 @@ TUPLE_LABEL CChart::GetSelValString(const PointD selPntD, string_t nameX,
   bAddEqSign = m_labelY.empty() ? false : true;
   get<IDX_LY>(tuple_label)     = m_pLabYValStrFn(selPntD.Y, m_precisionY, bAddEqSign);
 
-  int alpha = max(m_colChart.GetAlpha(), ALPHA_MINFORLABEL);  
+  int alpha = max(m_colChart.GetAlpha(), ALPHA_MINFORLABEL);
   Color labCol = SetAlpha(m_colChart, alpha);
   get<IDX_LCOLOR>(tuple_label) = labCol;
 
@@ -231,7 +231,7 @@ TUPLE_LABEL CChart::GetSelValString(const PointD selPntD, string_t nameX,
   return tuple_label;
 }
 
-bool CChart::DrawChartCurve(V_CHARTDATAD& vDataPntsD, double startX, double endX, 
+bool CChart::DrawChartCurve(V_CHARTDATAD& vDataPntsD, double startX, double endX,
                  MatrixD* pMatrixD, GraphicsPath* grPathPtr, Graphics* grPtr, float dpiRatio)
 {
   if (vDataPntsD.size()== 0)    // Just for safe programming; the function is never called on count zero
@@ -239,7 +239,7 @@ bool CChart::DrawChartCurve(V_CHARTDATAD& vDataPntsD, double startX, double endX
 
   V_CHARTDATAF vDataPntsF;
 // Convert the pntsD to the screen pntsF
-  if (!ConvertChartData(vDataPntsD, vDataPntsF, pMatrixD, startX, endX)) 
+  if (!ConvertChartData(vDataPntsD, vDataPntsF, pMatrixD, startX, endX))
     return false;
 
   V_CHARTDATAF::iterator itF = vDataPntsF.begin();
@@ -271,14 +271,14 @@ bool CChart::DrawChartCurve(V_CHARTDATAD& vDataPntsD, double startX, double endX
 // Now add the points
     if (m_bShowPnts || (vSize == 1))
     {
-      itF = adjacent_find(vDataPntsF.begin(), vDataPntsF.end() , 
+      itF = adjacent_find(vDataPntsF.begin(), vDataPntsF.end() ,
                          lesser_adjacent_interval<PointF, false>(PointF(dpiRatio*CHART_PNTSTRSH, 0.0f)));
-      if (itF == vDataPntsF.end())    // All intervals are greater than CHART_PNTSTRSH   
+      if (itF == vDataPntsF.end())    // All intervals are greater than CHART_PNTSTRSH
       {
         itF = vDataPntsF.begin();    // Base
         for (; itF != vDataPntsF.end(); ++itF)
         {
-          RectF rPntF = RectFFromCenterF(*itF, dpiRatio*CHART_DTPNTSZ, 
+          RectF rPntF = RectFFromCenterF(*itF, dpiRatio*CHART_DTPNTSZ,
                                                                 dpiRatio*CHART_DTPNTSZ);
           grPathPtr->AddEllipse(rPntF);
         }
@@ -307,7 +307,7 @@ bool CChart::DrawChartCurve(V_CHARTDATAD& vDataPntsD, double startX, double endX
   }
 
   if (grPathPtr->GetPointCount() > 0)          // Has points to draw
-  {  
+  {
     pen.SetWidth(1.0f*dpiRatio);
     pen.SetDashStyle(DashStyleSolid);
     grPtr->DrawPath(&pen, grPathPtr);
@@ -322,7 +322,7 @@ bool CChart::DrawChartCurve(V_CHARTDATAD& vDataPntsD, double startX, double endX
   return true;
 }
 
-bool CChart::ConvertChartData(V_CHARTDATAD& vDataPnts, V_CHARTDATAF& vDataPntsF, 
+bool CChart::ConvertChartData(V_CHARTDATAD& vDataPnts, V_CHARTDATAF& vDataPntsF,
                                                          MatrixD* pMatrixD, double startX, double endX)
 {
   ENSURE(vDataPnts.size() > 0);
@@ -348,16 +348,16 @@ bool CChart::ConvertChartData(V_CHARTDATAD& vDataPnts, V_CHARTDATAF& vDataPntsF,
 }
 
 bool CChart::GetVisibleChartNameAndVisuals(TUPLE_LABEL& tuple_res)
-{ 
+{
   if (m_bVisible && HasData())
   {
     int alpha = m_colChart.GetAlpha();
     alpha = max(alpha, 128);
     string_t emptyStr(_T(""));
-    tuple_res = make_tuple(m_label, emptyStr, emptyStr, emptyStr, emptyStr, SetAlpha(m_colChart, alpha), 
+    tuple_res = make_tuple(m_label, emptyStr, emptyStr, emptyStr, emptyStr, SetAlpha(m_colChart, alpha),
                                                                   m_dashStyle, m_fPenWidth);
     return true;
   }
-// Does not change the tuple_res  
+// Does not change the tuple_res
   return false;
 }

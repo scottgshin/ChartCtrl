@@ -37,7 +37,7 @@ void CreateRoundedRect(GraphicsPath& grPath, RectF& rectF, float radius, bool bR
   float d = radius * 2.0f;
 
   PointF pt1(rectF.X + radius, rectF.Y);                // Left end of top straight line
-  PointF pt2(rectF.X + rectF.Width - radius, rectF.Y);  // Right end of top straight line  
+  PointF pt2(rectF.X + rectF.Width - radius, rectF.Y);  // Right end of top straight line
   RectF r1(rectF.X, rectF.Y, d, d);                     // Left top arc bounding rect
 
   grPath.AddArc(r1, 180, 90);                           // Left top arc
@@ -48,7 +48,7 @@ void CreateRoundedRect(GraphicsPath& grPath, RectF& rectF, float radius, bool bR
 
   r1.Offset(sizeRectF.Width - d, 0);                    // Right top arc bounding rect
   grPath.AddArc(r1, 270, 90);                           // Right top arc
-  
+
   pt1 = PointF(rectF.GetRight(), rectF.GetTop() + radius);    // Top end of right down line
   pt2 = PointF(rectF.GetRight(), rectF.GetBottom() - radius); // Bottom end
   grPath.AddLine(pt1, pt2);                             // Right line from top to bottom
