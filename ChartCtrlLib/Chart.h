@@ -14,7 +14,7 @@ using namespace Gdiplus;
 string_t __stdcall GetLabelValStr(double val, int precision, bool bAddEqSign);
 
 ///////////////////////////////////////////////////////////////////////////////
-// Class CChart 
+// Class CChart
 
 class MatrixD;
 
@@ -30,7 +30,7 @@ public:
 // Access to data members
 // Read only; software takes care of assigning chartIdx
   int GetChartIdx(void) const {return m_nIdx;}
-// Label 
+// Label
   string_t GetChartName(void) const {return m_label;}
   void SetChartName(string_t name) {m_label = name;}
 // YAxis
@@ -98,7 +98,7 @@ public:
   void ResetChartData(void) { m_vDataPnts.clear();}
 
 // Implementation
-  void SetChartAttr(bool bVisible, bool bShowPnts, int idx, string_t label, string_t labelY, 
+  void SetChartAttr(bool bVisible, bool bShowPnts, int idx, string_t label, string_t labelY,
     int precisionY, DashStyle dashStyle, float penWidth, float tension, Color col);
 //protected:
   // Returns iterators that points to the last point.X <= startX and first point.X >= endX
@@ -110,17 +110,17 @@ public:
   PAIR_ITNEAREST GetNearestPointD(const PointD& origPntD, double dist, PointD& selPnt);
 
 // Used to get chart name and visuals for data and names legends
-  TUPLE_LABEL GetSelValString(const PointD selPntD, string_t nameX, int precision, 
+  TUPLE_LABEL GetSelValString(const PointD selPntD, string_t nameX, int precision,
                                                                       val_label_str_fn pLabXValStrFnPtr);
 // Draws the curve and, if the distance between chart points allows, draws data points
-  bool DrawChartCurve(V_CHARTDATAD& vDataPnts, double startX, double endX, 
+  bool DrawChartCurve(V_CHARTDATAD& vDataPnts, double startX, double endX,
         MatrixD* pMatrixD, GraphicsPath* grPathPtr, Graphics* grPtr, float dpiRatio = 1.0f);
-// Casts points in the range startX, endX to PointsF that are positions of data pnts in 
+// Casts points in the range startX, endX to PointsF that are positions of data pnts in
 // the ChartContainer window
-  bool ConvertChartData(V_CHARTDATAD& vDataPnts, V_CHARTDATAF& vChDatF, MatrixD* pMatrixD, 
+  bool ConvertChartData(V_CHARTDATAD& vDataPnts, V_CHARTDATAF& vChDatF, MatrixD* pMatrixD,
                                                                      double startX, double endX);
 // Get visible chart name and color
-  bool GetVisibleChartNameAndVisuals(TUPLE_LABEL& tuple_res);  
+  bool GetVisibleChartNameAndVisuals(TUPLE_LABEL& tuple_res);
 
 // Data members
 protected:
@@ -128,7 +128,7 @@ protected:
   bool m_bSelected;
   bool m_bShowPnts;
 
-  int m_nIdx; 
+  int m_nIdx;
   Color m_colChart;
   DashStyle m_dashStyle;
   float m_fPenWidth;

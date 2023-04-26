@@ -22,29 +22,30 @@ using namespace Gdiplus;
 
 IMPLEMENT_DYNAMIC(CChartContainer, CWnd)
 
-CChartContainer::CChartContainer(string_t name) : m_colBkground((ARGB)Color::White), 
+CChartContainer::CChartContainer(string_t name) : m_colBkground((ARGB)Color::White),
                                      m_colBorder((ARGB)Color::Black),
-                                     m_colAxis((ARGB)Color::Black), 
-                                     m_colZoomBorder((ARGB)Color::Red), 
+                                     m_colAxis((ARGB)Color::Black),
+                                     m_colZoomBorder((ARGB)Color::Red),
                                      m_colLegPnts((ARGB)Color::Red),
-                                     m_colDataViewPnts((ARGB)Color::BlueViolet), 
+                                     m_colDataViewPnts((ARGB)Color::BlueViolet),
                                      m_colLegBkgnd(Color(0xFFFFFFE0)),
                                      m_colLegBorder((ARGB)Color::Black),
-                                     m_colGrid((ARGB)Color::Gray), 
-                                     m_minExtY(DBL_MAX), m_maxExtY(-DBL_MAX), 
-                                     m_startX(DBL_MAX),m_endX(-DBL_MAX), 
-                                     m_axOffsXF(0.0f), m_axXPos(BETWEEN), m_axYPos(MIDDLE), 
-                                     m_scX(1.0), m_scY(1.0), 
+                                     m_colGrid((ARGB)Color::Gray),
+                                     m_minExtY(DBL_MAX), m_maxExtY(-DBL_MAX),
+                                     m_startX(DBL_MAX),m_endX(-DBL_MAX),
+                                     m_axOffsXF(0.0f), m_axXPos(BETWEEN), m_axYPos(MIDDLE),
+                                     m_scX(1.0), m_scY(1.0),
                                      m_bTracking(false), m_bHasNamesLeg(false), m_bUserEnabled(true),
                                      m_bAxBoundaries(false),
                                      m_chartSelIdx(-1), m_dataViewChartIdx(-1), m_precision(3),
                                      m_tmpZX(0.0), m_tmpZY(0.0),
-                                     m_pMatrixD(NULL), 
-                                     m_dataLegPntD(PointD(DBL_MAX, DBL_MAX)), m_epsX(0.0), 
+                                     m_pMatrixD(NULL),
+                                     m_dataLegPntD(PointD(DBL_MAX, DBL_MAX)), m_epsX(0.0),
                                      m_pDataWnd(NULL), m_pLegWnd(NULL),
-                                     m_pChartDataView(NULL), m_chModeX(MODE_FULLX), m_chModeY(MODE_FULLY), 
-                                     m_name(name), m_labelX(string_t(_T("X"))), m_pLabValStrFnPtr(&GetLabelValStr)
-                                    
+                                     m_pChartDataView(NULL), m_chModeX(MODE_FULLX), m_chModeY(MODE_FULLY),
+                                     m_name(name), m_labelX(string_t(_T("X"))), m_pLabValStrFnPtr(&GetLabelValStr),
+                                     use_coordinates(true), show_legend(true), first_time(true)
+
 {
 }
 
@@ -107,28 +108,28 @@ CChartContainer& CChartContainer::operator=(const CChartContainer& rhs)
     m_axYPos        = MIDDLE;
 
     m_scX = 1.0;     // Will be calculated in OnPaint()
-    m_scY = 1.0; 
-   
+    m_scY = 1.0;
+
     m_bTracking        = rhs.m_bTracking;    // Call ShowLegend after wnd creation to see
     m_bHasNamesLeg     = rhs.m_bHasNamesLeg;
     m_bUserEnabled     = rhs.m_bUserEnabled;
     m_dataLegPntD      = rhs.m_dataLegPntD;  // data legend window
     m_epsX             = rhs.m_epsX;         // Neighbourhood to search for nearest pnts
-    m_bAxBoundaries    = rhs.m_bAxBoundaries, 
-    m_chartSelIdx      = rhs.m_chartSelIdx; 
+    m_bAxBoundaries    = rhs.m_bAxBoundaries,
+    m_chartSelIdx      = rhs.m_chartSelIdx;
     m_dataViewChartIdx = -1;  // No Data View for transfer
 
     if (m_pMatrixD)
       delete m_pMatrixD;
     m_pMatrixD        = NULL; // To calculate in OnPaint()
-   
+
     m_precision       = rhs.m_precision;
 
     m_name            = rhs.m_name;
-    m_labelX          = rhs.m_labelX.empty() ? string_t(_T("X")) : rhs.m_labelX;;
+    m_labelX          = rhs.m_labelX.empty() ? string_t(_T("X")) : rhs.m_labelX;
     m_pLabValStrFnPtr = rhs.m_pLabValStrFnPtr;
 
-// Copy charts 
+// Copy charts
     if (!m_mapCharts.empty())
     {
       MAP_CHARTS::iterator itDest = m_mapCharts.begin();
@@ -161,15 +162,21 @@ CChartContainer& CChartContainer::operator=(const CChartContainer& rhs)
       else
         RefreshWnd();
 
-      if (rhs.IsLabWndExist(true)) 
+      if (rhs.IsLabWndExist(true))
         ShowNamesLegend();
     }
   }
+
+  use_coordinates   = rhs.use_coordinates;
+  show_legend       = rhs.show_legend;
+  first_time        = rhs.first_time;
+  _tcscpy_s(x_axis_label_for_printing, 200, rhs.x_axis_label_for_printing );
+
   return *this;
 }
 
-bool CChartContainer::CreateChartCtrlWnd(DWORD dwExStyle, DWORD dwStyle, 
-                                        const CRect& wndRect, CWnd* pParent, UINT nID)    
+bool CChartContainer::CreateChartCtrlWnd(DWORD dwExStyle, DWORD dwStyle,
+                                        const CRect& wndRect, CWnd* pParent, UINT nID)
 {
   BOOL bRes = CWnd::CreateEx(dwExStyle,
                                 AfxRegisterWndClass(CS_HREDRAW|CS_VREDRAW|CS_SAVEBITS),
@@ -247,7 +254,12 @@ CChartContainer* CChartContainer::CloneChartContainer(string_t name, bool bClone
 
     if (m_bTracking && IsLabWndExist(false))
       pContainer->m_mapSelPntsD = m_mapSelPntsD;
-      
+
+    pContainer->use_coordinates = use_coordinates;
+    pContainer->show_legend     = show_legend;
+    pContainer->first_time      = first_time;
+    _tcscpy_s(pContainer->x_axis_label_for_printing, 200, x_axis_label_for_printing );
+
   }
   else
   {
@@ -306,14 +318,14 @@ void CChartContainer::SetZoomBorderColor(Color col)
 
     if (m_chModeX == MODE_ZOOMINGX)
     {
-      PointD tmpPntD(m_tmpZX, 0.0);      
+      PointD tmpPntD(m_tmpZX, 0.0);
       PointF tmpPntF = m_pMatrixD->TransformToPntF(1.0, tmpPntD);
       CPoint tmpPnt  = CPointFromPntF(tmpPntF);
       DrawZoomBorderX(tmpPnt.x);
     }
     else if (m_chModeY == MODE_ZOOMINGY)
     {
-      PointD tmpPntD(0.0, m_tmpZY);      
+      PointD tmpPntD(0.0, m_tmpZY);
       PointF tmpPntF = m_pMatrixD->TransformToPntF(1.0, tmpPntD);
       CPoint tmpPnt  = CPointFromPntF(tmpPntF);
       DrawZoomBorderY(tmpPnt.y);
@@ -437,7 +449,7 @@ void CChartContainer::UpdateExtX(double minExtX, double maxExtX, bool bRedraw)
 
   if (startX == endX)
   {
-    endX += fabs(startX*0.01);;
+    endX += fabs(startX*0.01);
   }
 
   if (m_vHistX.size() > 0)   // Was zoomed or panned
@@ -573,7 +585,7 @@ void CChartContainer::SetContainerPrecision(int precision, bool bRedraw)
   }
 }
 
-size_t CChartContainer::SetDataViewSelPnts(int chartIdx, 
+size_t CChartContainer::SetDataViewSelPnts(int chartIdx,
                             const MAP_SELPNTSD& mapSelPntsD, V_CHARTDATAD* pChartData)
 {
   if (chartIdx == -1)
@@ -590,7 +602,7 @@ size_t CChartContainer::SetDataViewSelPnts(int chartIdx,
       {
         if (m_pChartDataView->IsIconic())
           m_pChartDataView->ShowWindow(SW_RESTORE);
-        m_pChartDataView->RedrawWindow(NULL, NULL, 
+        m_pChartDataView->RedrawWindow(NULL, NULL,
                 RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE|RDW_ALLCHILDREN);
       }
     }
@@ -602,7 +614,7 @@ size_t CChartContainer::SetDataViewSelPnts(int chartIdx,
 
 bool CChartContainer::ClearDataViewChartIdx(void)
 {
-  if (m_pChartDataView != NULL) 
+  if (m_pChartDataView != NULL)
   {
     if (m_dataViewChartIdx != -1)
     {
@@ -661,7 +673,7 @@ bool CChartContainer::HasChartWithData(int chartIdx, bool bVisibleOnly) const
     }
     if (bHasChart ||( chartIdx != -1))
       break;
- } 
+ }
 
   return bHasChart;
 }
@@ -673,10 +685,10 @@ int CChartContainer::HasChartDifferentPnts(int chartIdx, bool bVisibleOnly) cons
   int resIdx = -1;
 
   for (; it != m_mapCharts.cend(); ++it)
-  { 
+  {
     CChart* pChart = it->second;
     if ((pChart->GetMaxValX() > pChart->GetMinValX())||
-        (pChart->GetMaxValY() > pChart->GetMinValY())) 
+        (pChart->GetMaxValY() > pChart->GetMinValY()))
     {
       if (!bVisibleOnly||pChart->IsChartVisible())
         resIdx = pChart->GetChartIdx();
@@ -715,7 +727,7 @@ bool CChartContainer::HasVisiblePntsDInYBand(int chartIdx, double bottomY, doubl
 // Select visible X-part of the chart
     V_CHARTDATAD::iterator itB, itE;
     std::tie(itB, itE) = chartPtr->GetStartEndDataIterators(chartPtr->m_vDataPnts, m_startX, m_endX);
-    itB = find_if(itB, itE, 
+    itB = find_if(itB, itE,
       [topY, bottomY, locScY](const PointD& pntD) {return in_range(bottomY, topY, locScY*pntD.Y);});
     if (itB != itE)
     {
@@ -725,7 +737,7 @@ bool CChartContainer::HasVisiblePntsDInYBand(int chartIdx, double bottomY, doubl
     if (chartIdx != -1)
       break;
   }
-  
+
   return bHasPntsD;
 }
 
@@ -737,48 +749,66 @@ MatrixD* CChartContainer::GetTransformMatrixD(double startX, double endX, double
   RectF rGdiF;
   gr.GetVisibleClipBounds(&rGdiF);                 // The same as the clip rect
 
-  rGdiF.Width -= 1.0f;                          
+  rGdiF.Width -= 1.0f;
   rGdiF.Height -= 1.0f;
   rGdiF.Inflate(-DR_SPACE, -DR_SPACE);
 // Axis X: Its Y Position and Offset; also Y coord of orig point
   PAIR_XAXPOS axXPosY = GetXAxisPos(rGdiF, minY, maxY);
 // Axis Y: Its X Position and ofset; also X-coord of orig. point
-  PAIR_YAXPOS axYPosX = GetYAxisPos(rGdiF, startX, endX); 
+  PAIR_YAXPOS axYPosX = GetYAxisPos(rGdiF, startX, endX);
 
-  std::pair<double, double> pair_scales = UpdateScales(rGdiF, 
+  std::pair<double, double> pair_scales = UpdateScales(rGdiF,
                                                   startX, endX, minY, maxY);
   double scX = pair_scales.first;
   double scY = pair_scales.second;
 
+  // Added by SGS to solve problem with all negative or positive Y-values not being centered vertically on graph
+  double offsetY(axXPosY.second);
+  //if (( 0.0f < m_minExtY * m_maxExtY ) || are_equal(m_minExtY*m_maxExtY, 0.0))
+  //{
+  //    // both are positive or negative
+  //    if ( 0.0f < m_maxExtY )
+  //    {
+  //        // both are positive so subtract the drawRF.Y value
+  //        offsetY -= rGdiF.Y;
+  //    }
+  //    else
+  //    {
+  //        // both are negative so add the drawRF.Y value
+  //        offsetY += rGdiF.Y;
+  //    }
+  //}
+  // works otherwise so just use offsetY unchanged
+
   MatrixD matrixD;
-  matrixD.Translate(axYPosX.second, axXPosY.second); 
+  matrixD.Translate(axYPosX.second, offsetY );
   matrixD.Scale(scX, -scY);
 
   if ((axYPosX.first != BETWEEN)||(axXPosY.first != MIDDLE))
   {
-    double translateX = (axYPosX.first == RIGHT) ? -endX : 
+    double translateX = (axYPosX.first == RIGHT) ? -endX :
                                   (axYPosX.first == LEFT) ? -startX : 0.0;
-    double translateY = (axXPosY.first == BOTTOM) ? -minY : 
+    double translateY = (axXPosY.first == BOTTOM) ? -minY :
                                       (axXPosY.first == TOP) ? -maxY : 0.0;
-    matrixD.Translate(float(translateX), float(translateY)); 
+    matrixD.Translate(float(translateX), float(translateY));
   }
 
   ReleaseDC(pDC);
   return matrixD.Clone();
 }
 
-void CChartContainer::SetTransformMatrixD(MatrixD* pMatrixD) 
-{ 
-  if (m_pMatrixD != NULL) 
-    delete m_pMatrixD; 
+void CChartContainer::SetTransformMatrixD(MatrixD* pMatrixD)
+{
+  if (m_pMatrixD != NULL)
+    delete m_pMatrixD;
   m_pMatrixD = pMatrixD->Clone();
 }
 
-void CChartContainer::SetTransformMatrixD(void) 
-{ 
-  if (m_pMatrixD != NULL) 
+void CChartContainer::SetTransformMatrixD(void)
+{
+  if (m_pMatrixD != NULL)
     delete m_pMatrixD;
-  m_pMatrixD = 
+  m_pMatrixD =
         GetTransformMatrixD(m_startX, m_endX, m_minExtY, m_maxExtY);
 }
 
@@ -843,7 +873,7 @@ void CChartContainer::UndoHistStepX(bool bRedraw)
 // Restore state
   if (m_vHistX.empty())
     m_chModeX = MODE_FULLX;
-  else 
+  else
     m_chModeX = MODE_ZOOMEDX;
 
   if (bRedraw && IsWindow(m_hWnd) && IsWindowVisible())
@@ -867,7 +897,7 @@ void CChartContainer::UndoHistStepY(bool bRedraw)
   if (m_vHistY.size() > 1)    // Must check whether it is moves only
   {
     auto itZ = adjacent_find(m_vHistY.rbegin(), m_vHistY.rend(),
-      [](const PAIR_POS& lhs, const PAIR_POS& rhs) ->bool 
+      [](const PAIR_POS& lhs, const PAIR_POS& rhs) ->bool
           {return (fabs(1.0 - fabs((rhs.first - lhs.first)/(rhs.second - lhs.second))) > 4.0*DBL_EPSILON);});
     if (itZ == m_vHistY.rend())
       m_chModeY = MODE_MOVEDY;
@@ -910,6 +940,14 @@ void CChartContainer::OnChangedSize(int cx, int cy)
   SetTimer(2, 50, NULL);
 }
 
+void CChartContainer::OnChangedSize(const PointT<int> pt, const int width, const int height)
+{
+  HideLabWnds();            // Called from parent's/owner's OnSize handler
+  MoveWindow(pt.X, pt.Y, width, height);
+  RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE);
+  SetTimer(2, 50, NULL);
+}
+
 void CChartContainer::RefreshWnd(void)
 {
   CRect clR, legR, dataR;
@@ -938,17 +976,17 @@ void CChartContainer::RefreshWnd(void)
 Status CChartContainer::SaveContainerImage(string_t pathName)
 {
   if (!HasChartWithData(-1,true))   // Repeat to provide for standalone use
-    return GenericError; 
+    return GenericError;
 
   Status status = Aborted;
   UINT  num;        // number of image encoders
   UINT  size;       // size, in bytes, of the image encoder array
-  
+
 // How many encoders are there? How big (in bytes) is the array of all ImageCodecInfo objects?
   GetImageEncodersSize(&num, &size);
 // Create a buffer large enough to hold the array of ImageCodecInfo objects that will be returned by GetImageEncoders.
-  ImageCodecInfo* pImageCodecInfo = (ImageCodecInfo*)(malloc(size));;
-// GetImageEncoders creates an array of ImageCodecInfo objects and copies that array into a previously allocated buffer. 
+  ImageCodecInfo* pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
+// GetImageEncoders creates an array of ImageCodecInfo objects and copies that array into a previously allocated buffer.
   GetImageEncoders(num, size, pImageCodecInfo);
 // Get filter string
   sstream_t stream_t;
@@ -962,8 +1000,8 @@ Status CChartContainer::SaveContainerImage(string_t pathName)
   MAP_CLSID mapCLSID;
 
   for(UINT j = 0; j < num; ++j)
-  { 
-    stream_t << pImageCodecInfo[j].MimeType <<_T("\n");   
+  {
+    stream_t << pImageCodecInfo[j].MimeType <<_T("\n");
     getline(stream_t, str_t);
     size_t delPos = str_t.find(TCHAR('/'), 0);
     str_t.erase(0, delPos + 1);
@@ -971,15 +1009,22 @@ Status CChartContainer::SaveContainerImage(string_t pathName)
     mapCLSID.insert(TYPE_VALCLSID(str_t, clsID));
     tmp_t = str_t;
     std::transform(tmp_t.begin(), tmp_t.end(), tmp_t.begin(), [](const TCHAR&tch) ->TCHAR {return (TCHAR)toupper(tch);});
-    szFilter += tmp_t + string_t(_T(" File|*.")) + str_t + string_t(_T("|")); 
+    szFilter += tmp_t + string_t(_T(" File|*.")) + str_t + string_t(_T("|"));
   }
   szFilter += string_t(_T("|"));
   free(pImageCodecInfo);
 
   if (pathName.empty())     // Let the user choose
   {
-    TCHAR szWorkDirPath[255];
-    GetModuleFileName(NULL, szWorkDirPath, 255);
+    TCHAR szWorkDirPath[MAX_PATH];
+    if (0 != image_path[0])
+    {
+        _tcscpy_s(szWorkDirPath, MAX_PATH, image_path);
+    }
+    else
+    {
+        GetModuleFileName(NULL, szWorkDirPath, 255);
+    }
     PathRemoveFileSpec(szWorkDirPath);
 
     string_t dirStr(szWorkDirPath);
@@ -987,13 +1032,14 @@ Status CChartContainer::SaveContainerImage(string_t pathName)
     dirStr.erase(lastSlash, dirStr.size() - lastSlash);
     dirStr += string_t(_T("Images"));
     szFilter += string_t(_T("|"));
-    CFileDialog fileDlg(FALSE, _T("BMP File"), _T("*.bmp"), 
+    //CFileDialog fileDlg(FALSE, _T("BMP File"), _T("*.bmp"),
+    CFileDialog fileDlg(FALSE, _T("JPEG File"), PathFindFileName(image_path),
         OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOCHANGEDIR|OFN_EXPLORER,
         szFilter.c_str(), this);
 
     fileDlg.m_ofn.lpstrInitialDir = dirStr.c_str();
     fileDlg.m_ofn.lpstrTitle = _T("Save As Image");
- 
+
     string_t strTitle(_T("Save "));
 
     if (fileDlg.DoModal() == IDOK)
@@ -1007,10 +1053,10 @@ Status CChartContainer::SaveContainerImage(string_t pathName)
   if (pathName.empty())
     return InvalidParameter;
 
-  size_t pos = pathName.find(_T("."));
+  size_t pos = pathName.find_last_of(_T("."));
   if (pos == string_t::npos)
     return GenericError;
-  
+
   string_t szExt = pathName.substr(pos);
   pos = szFilter.find(szExt);
   if (pos == string_t::npos)
@@ -1028,10 +1074,15 @@ Status CChartContainer::SaveContainerImage(string_t pathName)
     DrawContainerToBmp(rGdi, bmp);
 
     clsID = it->second;
+#ifdef _UNICODE
     status = bmp.Save(pathName.c_str(), &clsID);
+#else if _MBCS
+    USES_CONVERSION;
+    status = bmp.Save(CA2W(pathName.c_str()), &clsID);
+#endif
     SendNotification(CODE_SAVEDIMAGE);
   }
-  else status = UnknownImageFormat; 
+  else status = UnknownImageFormat;
   return status;
 }
 
@@ -1057,12 +1108,12 @@ HRESULT CChartContainer::SaveChartData(string_t pathName, bool bAll)
     dirStr.erase(lastSlash, dirStr.size() - lastSlash);
     dirStr += string_t(_T("Charts"));
 
-    CFileDialog fileDlg(FALSE, _T("xml"), _T("*.xml"), 
+    CFileDialog fileDlg(FALSE, _T("xml"), _T("*.xml"),
         OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOCHANGEDIR|OFN_EXPLORER,
         szFilters, this);
     fileDlg.m_ofn.lpstrInitialDir = dirStr.c_str();
     fileDlg.m_ofn.lpstrTitle = _T("Save Charts");
- 
+
     string_t strTitle(_T("Save "));
 
     if (fileDlg.DoModal() == IDOK)
@@ -1098,7 +1149,7 @@ HRESULT CChartContainer::LoadCharts(LPCTSTR fileName, const MAP_CHARTCOLS& mapCo
   {
     if (IsLabWndExist(false))
       PrepareDataLegend(m_dataLegPntD, m_epsX, m_pDataWnd->m_mapLabs, m_mapSelPntsD, NULL);
- 
+
     UpdateContainerWnds();
   }
   return hr;
@@ -1144,7 +1195,7 @@ bool CChartContainer::ExportChartData(string_t chartName, V_CHARTDATAD& vDataPnt
   return false;
 }
 
-bool CChartContainer::ExportChartData(string_t chartName, 
+bool CChartContainer::ExportChartData(string_t chartName,
                                 std::vector<std::pair<double, double> >& vPairs) const
 {
   CChart* chartPtr = FindChartByName(chartName);
@@ -1167,7 +1218,7 @@ bool CChartContainer::ExportChartData(string_t chartName,
   return false;
 }
 
-bool CChartContainer::ExportChartData(string_t chartName, 
+bool CChartContainer::ExportChartData(string_t chartName,
                                    std::vector<double>& vX, std::vector<double>& vY) const
 {
   CChart* chartPtr = FindChartByName(chartName);
@@ -1196,7 +1247,7 @@ bool CChartContainer::ExportChartData(string_t chartName,
 }
 
 // Chart access and manipulation functions
-/// 
+///
 /// Returns false in the third member of the tuple if the chart does not exist
 ///
 std::tuple<double, double, bool> CChartContainer::GetChartBoundaries(int chartIdx, bool bY) const
@@ -1240,7 +1291,7 @@ bool CChartContainer::SetChartVisibility(int chartIdx, bool bVisible, bool bRedr
     if (bVisState != bVisible)
     {
       it->second->SetChartVisibility(bVisible);
-      if (bVisible == false) 
+      if (bVisible == false)
       {
         if (it->second->IsChartSelected())
         {
@@ -1264,10 +1315,10 @@ bool CChartContainer::SetChartVisibility(int chartIdx, bool bVisible, bool bRedr
     if (chartIdx != -1)
       break;
   }
-    
+
   if (bRedraw && bRes && IsWindow(m_hWnd) && IsWindowVisible()&&HasChartWithData(chartIdx))
     UpdateContainerWnds();
-  
+
   return bRes;
 }
 
@@ -1321,7 +1372,7 @@ bool CChartContainer::UpdateChartPenWidth(int chartIdx, float penWidth, bool bVi
   for (; it != m_mapCharts.end(); ++it)
   {
     CChart* chartPtr = it->second;
-    
+
     if (chartPtr->GetPenWidth() != penWidth)
     {
       if (!bVisibleOnly ||chartPtr->IsChartVisible())
@@ -1407,7 +1458,7 @@ bool CChartContainer::AllowChartPnts(int chartIdx, bool bAllowed, bool bVisibleO
 
   if (bRes && bRedraw && IsWindow(m_hWnd) && IsWindowVisible() && (-1 < HasChartDifferentPnts(chartIdx, true)))
     RefreshWnd();
- 
+
   return bRes;
 }
 
@@ -1435,7 +1486,7 @@ bool CChartContainer::SetChartColor(int chartIdx, Color col, bool bVisibleOnly, 
     {
       if (!bVisibleOnly || chartPtr->IsChartVisible())
       {
-        it->second->SetChartColor(col); 
+        it->second->SetChartColor(col);
         if (bRedraw && IsWindow(m_hWnd) && IsWindowVisible() && HasChartWithData(chartIdx, true))
           UpdateContainerWnds();
         bRes = true;
@@ -1484,7 +1535,7 @@ bool CChartContainer::SetChartDashStyle(int chartIdx, DashStyle dashStyle, bool 
 
   return bRes;
 }
-  
+
 int CChartContainer::HasSelectedChart(void) const
 {
   MAP_CHARTS::const_iterator it = m_mapCharts.begin();
@@ -1526,7 +1577,7 @@ int CChartContainer::SelectChart(int chartIdx, bool bRedraw)
   }
 
   if (bRedraw && IsWindow(m_hWnd) && IsWindowVisible() && HasChartWithData(chartIdx, true))
-    RefreshWnd();    
+    RefreshWnd();
 
   return m_chartSelIdx;
 
@@ -1549,7 +1600,7 @@ int CChartContainer::SelectChartByMouseClick(CPoint pnt, bool bRedraw)
     V_CHARTDATAF vDataPntsF;
 
     int chartIdx = -1;
-    
+
     for (; it != itE; ++it)
     {
       chartPtr = it->second;
@@ -1610,7 +1661,7 @@ bool CChartContainer::SetChartPrecisionY(int chartIdx, int precisionY, bool bVis
   if (bRes && bRedraw)
   {
     if (IsLabWndVisible(false))
-      UpdateDataLegend(false);    
+      UpdateDataLegend(false);
     if (chartIdx == -1)
       chartIdx = m_dataViewChartIdx;
     UpdateDataView(chartIdx, F_NODATACHANGE);
@@ -1634,7 +1685,7 @@ bool CChartContainer::ChangeChartName(int chartIdx, string_t name, bool bRedraw)
 
   if (itCh != itE)                    // Chart is found
   {
-    name = NormalizeString(name, STR_MAXLEN, STR_NORMSIGN); 
+    name = NormalizeString(name, STR_MAXLEN, STR_NORMSIGN);
 
     for (; it != itE; ++it)           // Check for uniqueness
     {
@@ -1642,7 +1693,7 @@ bool CChartContainer::ChangeChartName(int chartIdx, string_t name, bool bRedraw)
         return false;
     }
     itCh->second->SetChartName(name); // Assign the new nane
-    
+
     if (bRedraw)
       UpdateContainerWnds(chartIdx);
 
@@ -1657,7 +1708,7 @@ string_t CChartContainer::GetChartYValName(int chartIdx) const
   MAP_CHARTS::const_iterator it = m_mapCharts.find(chartIdx);
   if (it != m_mapCharts.cend())
     return it->second->GetAxisYName();
-  return string_t(_T(""));    
+  return string_t(_T(""));
 }
 
 bool CChartContainer::ChangeChartYValName(int chartIdx, string_t nameY, bool bVisibleOnly, bool bRedraw)
@@ -1682,7 +1733,7 @@ bool CChartContainer::ChangeChartYValName(int chartIdx, string_t nameY, bool bVi
     if (chartIdx != -1)
       break;
   }
-   
+
   if (bRes &&bRedraw)
   {
     if (IsLabWndVisible(false))
@@ -1722,14 +1773,14 @@ bool CChartContainer::SetLabYValStrFn(int chartIdx, val_label_str_fn pLabYValStr
     if (chartIdx != -1)
       break;
   }
-   
+
   if (bRes && bRedraw)
   {
     if (IsLabWndVisible(false))
       UpdateDataLegend(false);
     UpdateDataView(chartIdx != -1 ? chartIdx : m_dataViewChartIdx, F_NODATACHANGE);
-  }  
- 
+  }
+
   return bRes;
 }
 
@@ -1910,7 +1961,7 @@ bool CChartContainer::ZoomMoveContainerY(double startY, double endY, bool bMovin
     m_vHistY.push_back(PAIR_POS(m_minExtY, m_maxExtY));
     m_minExtY = startY;
     m_maxExtY = endY;
-    if (bMoving && ((m_chModeY == MODE_FULLY)||(m_chModeY == MODE_MOVEDY))) 
+    if (bMoving && ((m_chModeY == MODE_FULLY)||(m_chModeY == MODE_MOVEDY)))
       m_chModeY = MODE_MOVEY;
     else
       m_chModeY = MODE_ZOOMY;   // All prepared but not rendered
@@ -1952,7 +2003,7 @@ CH_MODE CChartContainer::ZoomContainerY(double startY, double endY, bool bRedraw
     }
 
   }
-  
+
   return m_chModeY;
 }
 
@@ -1990,7 +2041,7 @@ LRESULT CChartContainer::SendNotification(UINT code, int chartIdx)
   {
   case CODE_VISIBILITY: nmchart.bState = IsChartVisible(chartIdx);            break;
   case CODE_SHOWPNTS:   nmchart.bState = AreChartPntsAllowed(chartIdx).first; break;
-  case CODE_EXTX:  
+  case CODE_EXTX:
   case CODE_EXTY:
                         nmchart.minX   = GetStartX();
                         nmchart.maxX   = GetEndX();
@@ -2003,11 +2054,11 @@ LRESULT CChartContainer::SendNotification(UINT code, int chartIdx)
                         nmchart.maxY   = GetInitialMaxExtY();
                         break;
   case CODE_SAVEIMAGE:
-  case CODE_SAVEDIMAGE: 
+  case CODE_SAVEDIMAGE:
   case CODE_SAVECHARTS:
-  case CODE_SAVEDCHARTS: 
+  case CODE_SAVEDCHARTS:
   case CODE_PRINTING:
-  case CODE_PRINTED:    
+  case CODE_PRINTED:
   case CODE_SCY:        break;
   case CODE_TRACKING:   nmchart.bState = m_bTracking;
                         break;
@@ -2023,7 +2074,7 @@ LRESULT CChartContainer::SendNotification(UINT code, int chartIdx)
 // Chart interface functions
 int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label,
                                string_t labelY, int precisionY,
-                               DashStyle dashStyle, float penWidth, float tension, 
+                               DashStyle dashStyle, float penWidth, float tension,
                                Color colChart, V_CHARTDATAD& vData, bool bRedraw)
 {
   int chartIdx = GetMaxChartIdx() + 1;
@@ -2037,7 +2088,7 @@ int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label,
   }
   else
   {
-    label = string_t(_T("Cnart"));
+    label = string_t(_T("Chart"));
     bAddIdx = true;
   }
 
@@ -2049,9 +2100,9 @@ int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label,
     label += string_t(_T("_")) + string_t(buffer_t);
   }
 
-  CChart* chartPtr = new CChart;   
+  CChart* chartPtr = new CChart;
 
-  chartPtr->SetChartAttr(bVisible, bShowPnts, chartIdx, label, labelY, 
+  chartPtr->SetChartAttr(bVisible, bShowPnts, chartIdx, label, labelY,
                                     precisionY, dashStyle, penWidth, tension, colChart);
 
   size_t dataSize = vData.size();
@@ -2061,7 +2112,7 @@ int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label,
   {
     chartPtr->m_vDataPnts.assign(vData.begin(), vData.end());
     chartPtr->m_vDataPnts.shrink_to_fit();
- 
+
 // It is cheaper to sort right away than to look for max/min x and sort later if needed
     if (dataSize > 1)
       std::sort(chartPtr->m_vDataPnts.begin(), chartPtr->m_vDataPnts.end(), less_pnt<double, false>());
@@ -2070,8 +2121,8 @@ int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label,
     double maxValX = chartPtr->m_vDataPnts.back().X;
 
 // Find min and max Y; works even for one-point vector
-    PAIR_ITS pair_minmaxY = 
-        minmax_element(chartPtr->m_vDataPnts.begin(), chartPtr->m_vDataPnts.end(), 
+    PAIR_ITS pair_minmaxY =
+        minmax_element(chartPtr->m_vDataPnts.begin(), chartPtr->m_vDataPnts.end(),
                                                          less_pnt<double, true>());
     double minValY = pair_minmaxY.first->Y;
     double maxValY = pair_minmaxY.second->Y;
@@ -2108,36 +2159,36 @@ int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label,
 }
 
 // Overload for time series
-int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label, 
-                              string_t labelY, int precisionY, DashStyle dashStyle, 
-                              float penWidth, float tension, 
-                              Color colChart, std::vector<double>& vTmSeries, 
+int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label,
+                              string_t labelY, int precisionY, DashStyle dashStyle,
+                              float penWidth, float tension,
+                              Color colChart, std::vector<double>& vTmSeries,
                               double startX, double stepX, bool bRedraw)
 {
   V_CHARTDATAD vData(vTmSeries.size());
   if (vData.size() > 0)
     transform(vTmSeries.begin(), vTmSeries.end(), vData.begin(), time_series_to_pnt<double>(startX, stepX));
 
-  return AddChart(bVisible, bShowPnts, label, labelY, precisionY, 
+  return AddChart(bVisible, bShowPnts, label, labelY, precisionY,
                                 dashStyle, penWidth, tension, colChart, vData, bRedraw);
 }
 
-int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label, 
-                string_t labelY, int precisionY, DashStyle dashStyle, 
-                float penWidth, float tension, Color colChart, 
+int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label,
+                string_t labelY, int precisionY, DashStyle dashStyle,
+                float penWidth, float tension, Color colChart,
                 std::vector<std::pair<double, double> >& vXYData, bool bRedraw)
 {
   V_CHARTDATAD vData(vXYData.size());
   if (vData.size() > 0)
     transform(vXYData.begin(), vXYData.end(), vData.begin(), xy_to_pnt<double>());
 
-  return AddChart(bVisible, bShowPnts, label, labelY, precisionY, 
+  return AddChart(bVisible, bShowPnts, label, labelY, precisionY,
                                 dashStyle, penWidth, tension, colChart, vData, bRedraw);
 }
 
 int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY,
-                int precisionY, DashStyle dashStyle, float penWidth, float tension, 
-                Color colChart, std::vector<double>& vX, std::vector<double>& vY, 
+                int precisionY, DashStyle dashStyle, float penWidth, float tension,
+                Color colChart, std::vector<double>& vX, std::vector<double>& vY,
                 bool bRedraw)
 {
   size_t sizeX = vX.size();
@@ -2151,7 +2202,7 @@ int CChartContainer::AddChart(bool bVisible, bool bShowPnts, string_t label, str
     for (size_t i = 0; i < sizeX; ++i)
       vData[i] = PointD(vX[i], vY[i]);
   }
-  return AddChart(bVisible, bShowPnts, label, labelY, precisionY, 
+  return AddChart(bVisible, bShowPnts, label, labelY, precisionY,
                                 dashStyle, penWidth, tension, colChart, vData, bRedraw);
 }
 
@@ -2162,7 +2213,7 @@ bool CChartContainer::AppendChartData( int chartIdx, V_CHARTDATAD& vData, bool b
   if (dataSize == 0)
     return false;
 
-  MAP_CHARTS::iterator it = m_mapCharts.find(chartIdx); 
+  MAP_CHARTS::iterator it = m_mapCharts.find(chartIdx);
   if (it != m_mapCharts.end())
   {
     V_CHARTDATAD vLocData(vData);
@@ -2176,7 +2227,7 @@ bool CChartContainer::AppendChartData( int chartIdx, V_CHARTDATAD& vData, bool b
       return false;
 
     if (IsLabWndExist(false))     // Might update m_pMatrix if m_dataLegPntD is in X range
-      PrepareDataLegend(m_dataLegPntD, m_epsX, m_pDataWnd->m_mapLabs, m_mapSelPntsD, true);  
+      PrepareDataLegend(m_dataLegPntD, m_epsX, m_pDataWnd->m_mapLabs, m_mapSelPntsD, true);
 
     UpdateDataView(chartIdx, F_APPEND);
 
@@ -2207,7 +2258,7 @@ bool CChartContainer::AppendChartData(int chartIdx,  std::vector<double>& vTmSer
 }
 
 // Overload for vector of pairs
-bool CChartContainer::AppendChartData(int chartIdx,  
+bool CChartContainer::AppendChartData(int chartIdx,
               std::vector<std::pair<double, double> >& vXYData, bool bUpdate)
 {
   if (vXYData.size() == 0)
@@ -2220,7 +2271,7 @@ bool CChartContainer::AppendChartData(int chartIdx,
 }
 
 // Overload for vectors of doubles
-bool CChartContainer::AppendChartData(int chartIdx,  
+bool CChartContainer::AppendChartData(int chartIdx,
               std::vector<double>& vX, std::vector<double>& vY, bool bUpdate)
 {
   size_t sizeX = vX.size();
@@ -2237,16 +2288,16 @@ bool CChartContainer::AppendChartData(int chartIdx,
   return AppendChartData(chartIdx, vData, bUpdate);
 }
 
-bool CChartContainer::ReplaceChartData(int chartIdx, V_CHARTDATAD& vData, bool bClip, 
+bool CChartContainer::ReplaceChartData(int chartIdx, V_CHARTDATAD& vData, bool bClip,
                                                      bool bUpdate, bool bVerbose, bool bRedraw)
 {
   MAP_CHARTS::iterator mapIt = m_mapCharts.find(chartIdx);
   if (mapIt == m_mapCharts.end())
     return false;                           // Wrong Chart ID
 
- // Warning and reset if (bReset)                               
-  if (bVerbose && (AfxMessageBox(CString("You will replace all old chart data. Replace anyway?"), 
-                                                      MB_YESNO|MB_ICONQUESTION) == IDNO)) 
+ // Warning and reset if (bReset)
+  if (bVerbose && (AfxMessageBox(CString("You will replace all old chart data. Replace anyway?"),
+                                                      MB_YESNO|MB_ICONQUESTION) == IDNO))
     return false;
 
 // Sort input vector; it is cheaper than check first whether it was sorted
@@ -2255,7 +2306,7 @@ bool CChartContainer::ReplaceChartData(int chartIdx, V_CHARTDATAD& vData, bool b
     sort(vLocData.begin(), vLocData.end(), less_pnt<double, false>());
 
   CChart* chartPtr = mapIt->second;
-  
+
 // Define what take from vData
   V_CHARTDATAD::iterator itStart = vLocData.begin();
   V_CHARTDATAD::iterator itEnd = vLocData.end();
@@ -2270,7 +2321,7 @@ bool CChartContainer::ReplaceChartData(int chartIdx, V_CHARTDATAD& vData, bool b
       ++itEnd;
   }
 
-  chartPtr->m_vDataPnts.assign(itStart, itEnd);  
+  chartPtr->m_vDataPnts.assign(itStart, itEnd);
   chartPtr->m_vDataPnts.shrink_to_fit();
 
   size_t dataSize = chartPtr->m_vDataPnts.size();
@@ -2291,7 +2342,7 @@ bool CChartContainer::ReplaceChartData(int chartIdx, V_CHARTDATAD& vData, bool b
     maxY = pair_minmaxY.second->Y;
   }
 
-  chartPtr->SetMinValY(minY);   
+  chartPtr->SetMinValY(minY);
   chartPtr->SetMaxValY(maxY);
   chartPtr->SetLocScaleY(1.0);
 
@@ -2299,15 +2350,15 @@ bool CChartContainer::ReplaceChartData(int chartIdx, V_CHARTDATAD& vData, bool b
   if (!HasChartWithData(-1))
   {
     ResetChartContainer(true);
-  } 
+  }
   else
   {
     if (IsLabWndExist(false))     // Might update m_pMatrix if m_dataLegPntD is in X range
-      PrepareDataLegend(m_dataLegPntD, m_epsX, m_pDataWnd->m_mapLabs, m_mapSelPntsD, true);  
+      PrepareDataLegend(m_dataLegPntD, m_epsX, m_pDataWnd->m_mapLabs, m_mapSelPntsD, true);
 
     UpdateDataView(chartIdx, F_REPLACE);
 
-    if (bUpdate)   // Update and display 
+    if (bUpdate)   // Update and display
     {
       SetExtX();
       SetExtY();
@@ -2331,7 +2382,7 @@ bool CChartContainer::ReplaceChartData(int chartIdx, V_CHARTDATAD& vData, bool b
 }
 
 // Overload for time series
-bool CChartContainer::ReplaceChartData(int chartIdx,  std::vector<double>& vTmSeries, 
+bool CChartContainer::ReplaceChartData(int chartIdx,  std::vector<double>& vTmSeries,
                 double startX, double stepX, bool bClip, bool bUpdate, bool bVerbose, bool bRedraw)
 {
   V_CHARTDATAD vData;
@@ -2343,7 +2394,7 @@ bool CChartContainer::ReplaceChartData(int chartIdx,  std::vector<double>& vTmSe
 }
 
 // Overload for vector of pairs
-bool CChartContainer::ReplaceChartData(int chartIdx,  
+bool CChartContainer::ReplaceChartData(int chartIdx,
     std::vector<std::pair<double, double> >& vXYData, bool bClip, bool bUpdate, bool bVerbose, bool bRedraw)
 {
   V_CHARTDATAD vData;
@@ -2354,7 +2405,7 @@ bool CChartContainer::ReplaceChartData(int chartIdx,
   return ReplaceChartData(chartIdx, vData, bUpdate, bClip, bVerbose, bRedraw);
 }
 // Overload for vectors of doubles
-bool CChartContainer::ReplaceChartData(int chartIdx,  
+bool CChartContainer::ReplaceChartData(int chartIdx,
       std::vector<double>& vX, std::vector<double>& vY, bool bClip, bool bUpdate, bool bVerbose, bool bRedraw)
 {
 
@@ -2372,7 +2423,7 @@ bool CChartContainer::ReplaceChartData(int chartIdx,
   return ReplaceChartData(chartIdx, vData, bClip, bUpdate, bVerbose, bRedraw);
 }
 
-void CChartContainer::ResetCharts(bool bResetLocY)  
+void CChartContainer::ResetCharts(bool bResetLocY)
 {
 // Restore startX, endX
   m_startX = GetInitialStartX();
@@ -2412,22 +2463,22 @@ void CChartContainer::ResetChartContainer(bool bKeepCharts, bool bResetCols)
     m_colAxis         = pContainer->GetAxesColor();
     m_colZoomBorder   = pContainer->GetZoomBorderColor();
     m_colLegPnts      = pContainer->GetLegPntsColor();
-    m_colDataViewPnts = pContainer->GetDataViewPntsColor(); 
+    m_colDataViewPnts = pContainer->GetDataViewPntsColor();
     m_colLegBorder    = pContainer->GetLegBkgndColor();
     m_colLegBorder    = pContainer->GetLegBorderColor();
     m_colGrid         = pContainer->GetGridColor();
   }
 
-//  Set default values     
+//  Set default values
   m_minExtY           = pContainer->GetMinY();
-  m_maxExtY           = pContainer->GetMaxY(); 
+  m_maxExtY           = pContainer->GetMaxY();
   m_startX            = pContainer->GetStartX();
-  m_endX              = pContainer->GetEndX(); 
+  m_endX              = pContainer->GetEndX();
   m_axOffsXF          = pContainer->GetAxisOffsetX();
   m_axXPos            = pContainer->GetXAxisPos();
-  m_axYPos            = pContainer->GetYAxisPos(); 
+  m_axYPos            = pContainer->GetYAxisPos();
   m_scX               = pContainer->GetScX();
-  m_scY               = pContainer->GetScY();;
+  m_scY               = pContainer->GetScY();
   m_bTracking         = false;
   m_dataLegPntD       = pContainer->GetDataLegPntD();
   m_bAxBoundaries     = false;
@@ -2462,7 +2513,7 @@ void CChartContainer::ResetChartContainer(bool bKeepCharts, bool bResetCols)
  DestroyChartDataView();
 }
 
-bool CChartContainer::TruncateChart(int chartIdx, double startX, double endX, 
+bool CChartContainer::TruncateChart(int chartIdx, double startX, double endX,
                                                           bool bUpdateExt, bool bRedraw)
 {
   if (!HasChartWithData(chartIdx))                                 // No chart with data
@@ -2484,7 +2535,7 @@ bool CChartContainer::TruncateChart(int chartIdx, double startX, double endX,
                                                       m_mapCharts.find(chartIdx);
   for (; it != m_mapCharts.end(); ++it)
   {
-    CChart* chartPtr = it->second;  // Append data vector 
+    CChart* chartPtr = it->second;  // Append data vector
     if (!chartPtr->HasData())
       continue;
     bool bRes = chartPtr->TruncateChartData(startX, endX);
@@ -2599,7 +2650,7 @@ bool CChartContainer::ShowAxisXBoundaries(bool bSet, bool bRedraw)
 CDataWnd* CChartContainer::ShowDataLegend(CPoint pnt)
 {
   if (m_mapCharts.empty())            // No charts, no legends
-    return m_pDataWnd;     
+    return m_pDataWnd;
 
   if (m_pDataWnd == NULL)             // Need to allocate memory
   {
@@ -2609,7 +2660,7 @@ CDataWnd* CChartContainer::ShowDataLegend(CPoint pnt)
     m_pDataWnd = pDataWnd;
   }
 
-// After PrepareDataLegend mapSelData might have some points out the range Y, but mapLabs might be empty  
+// After PrepareDataLegend mapSelData might have some points out the range Y, but mapLabs might be empty
   if (PrepareDataLegend(pnt, m_pDataWnd->m_mapLabs, m_mapSelPntsD) > 0)
   {                                   // Create dataWnd if needed, and calculate dataWnd rects
     m_pDataWnd->CreateLegend(this, pnt, true);
@@ -2627,11 +2678,11 @@ CDataWnd* CChartContainer::ShowDataLegend(double dataLegX)
   if (!IsWindow(m_hWnd)||!IsWindowVisible())  // Means container wnd was created and is visible
     return m_pDataWnd;
   if (m_mapCharts.empty())                    // No charts, no legends
-    return m_pDataWnd;     
+    return m_pDataWnd;
 
   MAP_LABSTR tmpMapStr;
   m_dataLegPntD = PointD(dataLegX, m_minExtY);
-// After this point mapSelData might have some points out the range Y, but mapLabs might be empty  
+// After this point mapSelData might have some points out the range Y, but mapLabs might be empty
   size_t selPnts = PrepareDataLegend(m_dataLegPntD, CHART_DTPNTSZ/m_scX, tmpMapStr, m_mapSelPntsD, false);
   if (selPnts > 0)
   {
@@ -2647,7 +2698,7 @@ CDataWnd* CChartContainer::ShowDataLegend(double dataLegX)
     if (m_pDataWnd)
     {
       m_pDataWnd->m_mapLabs.swap(tmpMapStr);
-      PointF dataLegPntF = m_pMatrixD->TransformToPntF(1.0, m_dataLegPntD); 
+      PointF dataLegPntF = m_pMatrixD->TransformToPntF(1.0, m_dataLegPntD);
       CPoint pnt = CPointFromPntF(dataLegPntF);
       m_pDataWnd->CreateLegend(this, pnt, true);
       m_bTracking = true;
@@ -2665,11 +2716,11 @@ CDataWnd* CChartContainer::ShowDataLegend(double dataLegX)
 
 CDataWnd* CChartContainer::ShowNamesLegend(void)
 {
-  if (IsWindow(m_hWnd)&&IsWindowVisible()&& !m_mapCharts.empty()&& HasChartWithData(-1)) 
+  if (IsWindow(m_hWnd)&&IsWindowVisible()&& !m_mapCharts.empty()&& HasChartWithData(-1))
   {
     MAP_LABSTR tmpMapStr;
     PrepareNamesLegend(tmpMapStr);
-     
+
 // No matter what, allocate memory because there are charts, may be hidden
     CDataWnd* pLegWnd = NULL;
     if (m_pLegWnd == NULL)
@@ -2688,11 +2739,15 @@ CDataWnd* CChartContainer::ShowNamesLegend(void)
         m_bHasNamesLeg = true;
         RefreshWnd();
         m_pLegWnd->ShowLegendWnd();  // Garanteed m_pLegWnd exists
+        show_legend = true;
       }
     }
   }
-  else  // It makes no sense to keep memory if there is no container wnd, or charts in container, or chartst with data
+  else
+  {
+      // It makes no sense to keep memory if there is no container wnd, or charts in container, or chartst with data
     m_pLegWnd = DestroyLabWnd(m_pLegWnd);
+  }
 
   return m_pLegWnd;
 }
@@ -2706,7 +2761,7 @@ bool CChartContainer::ShowChartPoints(int chartIdx, bool bShow, bool bRedraw)
   for (; it != m_mapCharts.end(); ++it)
   {
     CChart* chartPtr = it->second;
-    if ((chartPtr->GetMaxValX() > chartPtr->GetMinValX())||(chartPtr->GetMaxValY() > chartPtr->GetMinValY())) 
+    if ((chartPtr->GetMaxValX() > chartPtr->GetMinValX())||(chartPtr->GetMaxValY() > chartPtr->GetMinValY()))
     {
       chartPtr->AllowPnts(bShow);
       if (chartPtr->IsChartVisible())
@@ -2729,7 +2784,7 @@ void CChartContainer::UpdateDataLegend(bool bChangeMatrix)
   {
     if (bChangeMatrix)
       SetTransformMatrixD();
-    UpdateDataLegend(m_mapSelPntsD, m_pDataWnd->m_mapLabs);  
+    UpdateDataLegend(m_mapSelPntsD, m_pDataWnd->m_mapLabs);
 
     RefreshWnd(); // UpdateDataLegend draws dataWnd; RefreshWnd redraws the region excluding dataWnd
   }
@@ -2743,7 +2798,7 @@ void CChartContainer::CopyDataLegendWnd(void)
   if (m_pDataWnd == NULL)
     m_pDataWnd = new CDataWnd(m_colLegBkgnd, m_colLegBorder);
   bool bRes = false;
-  if ((m_pDataWnd != NULL)&&!IsWindow(m_pDataWnd->m_hWnd))  
+  if ((m_pDataWnd != NULL)&&!IsWindow(m_pDataWnd->m_hWnd))
     bRes = m_pDataWnd->CreateLegend(this);
   if (bRes)
     UpdateDataLegend(false);
@@ -2772,7 +2827,7 @@ CDataWnd* CChartContainer::DestroyLabWnd(CDataWnd* pWnd, bool bRedraw)
 {
   if (pWnd != NULL)
   {
-    if (IsWindow(pWnd->m_hWnd))   
+    if (IsWindow(pWnd->m_hWnd))
     {
       pWnd->DestroyWindow();
       if (pWnd->IsDataLeg())
@@ -2910,17 +2965,20 @@ double CChartContainer::UpdateScaleY(const float drawRectHeight, double minY, do
 }
 
 // Calculates scX, scY but does not set m_scX, m_scY, leaves it to the user
-PAIR_DBLS CChartContainer::UpdateScales(const RectF drawRectF, 
+PAIR_DBLS CChartContainer::UpdateScales(RectF &drawRectF,
                                   double startX, double endX, double minY, double maxY)
 {
   if (m_mapCharts.empty())
     return make_pair(1.0, 1.0);
 
-  RectF dRF = drawRectF;
-  if ((m_chModeY == MODE_FULLY)||(m_chModeY == MODE_MOVEDY)||(m_chModeY == MODE_MOVEY))
-    dRF.Inflate(0.0f, -0.1f*drawRectF.Height); // Reserve 20% to beautify full picture
-  double scX = UpdateScaleX(dRF.Width, startX, endX);
-  double scY = UpdateScaleY(dRF.Height, minY, maxY);
+  //RectF dRF = drawRectF;
+  //if ((m_chModeY == MODE_FULLY)||(m_chModeY == MODE_MOVEDY)||(m_chModeY == MODE_MOVEY))
+  //{
+  //    // Legacy - Only centers the graph if the graph is centered around  y = 0;
+  //    drawRectF.Inflate(0.0f, -0.1f*drawRectF.Height); // Reserve 20% to beautify full picture
+  //}
+  double scX = UpdateScaleX(drawRectF.Width, startX, endX);
+  double scY = UpdateScaleY(drawRectF.Height, minY, maxY);
   return make_pair(scX, scY);
 }
 
@@ -2928,7 +2986,7 @@ PAIR_DBLS CChartContainer::UpdateScales(const RectF drawRectF,
 double CChartContainer::BeginZoomingX(CPoint pnt, bool bDraw)
 {
   m_chModeX = MODE_ZOOMINGX;
- 
+
   PointD mousePntD;
   MousePntToPntD(pnt, mousePntD, m_pMatrixD);
   double startX = mousePntD.X;
@@ -3022,8 +3080,8 @@ CH_MODE CChartContainer::RestoreModeY(void)
   return m_chModeY;
 }
 
-// Protected data and names legend functions    
-size_t CChartContainer::PrepareDataLegend(CPoint pnt, MAP_LABSTR& mapLabels, 
+// Protected data and names legend functions
+size_t CChartContainer::PrepareDataLegend(CPoint pnt, MAP_LABSTR& mapLabels,
                                                     MAP_SELPNTSD& mapSelPntsD)
 {
   PointD dataLegPntD;
@@ -3037,7 +3095,7 @@ size_t CChartContainer::PrepareDataLegend(CPoint pnt, MAP_LABSTR& mapLabels,
     m_dataLegPntD = dataLegPntD;
     m_epsX        = epsX;
   }
-  else 
+  else
     m_dataLegPntD = PointD(DBL_MAX, DBL_MAX);
 
   return mapLabelsSize;
@@ -3065,16 +3123,16 @@ size_t CChartContainer::PrepareDataLegend(PointD origPntD, double epsX, MAP_LABS
 
 //Search the chart map
     PointD selPntD;
-    
+
     MAP_CHARTS::iterator it = m_mapCharts.begin();
     MAP_CHARTS::iterator itE = m_mapCharts.end();
-    
+
     for (; it != itE; ++it)
     {
       CChart* chartPtr= it->second;
       bool bVisible = chartPtr->IsChartVisible();
 
-      PAIR_ITNEAREST pair_res = 
+      PAIR_ITNEAREST pair_res =
                             chartPtr->GetNearestPointD(origPntD, epsX, selPntD);
       int nSel = pair_res.second;
       if (nSel > 0)    // Might be out of the client rect
@@ -3096,7 +3154,7 @@ size_t CChartContainer::PrepareDataLegend(PointD origPntD, double epsX, MAP_LABS
         }
       }
     }
-    
+
     return mapLabels.size();
   }
   return 0;
@@ -3113,7 +3171,7 @@ size_t CChartContainer::PrepareNamesLegend(MAP_LABSTR& mapLabels)
   TUPLE_LABEL tuple_res;
   MAP_CHARTS::iterator it = m_mapCharts.begin();
   MAP_CHARTS::iterator itE = m_mapCharts.end();
-  for (; it != itE; ++it)  
+  for (; it != itE; ++it)
   {
     bool bSelected = it->second->GetVisibleChartNameAndVisuals(tuple_res);
     if (bSelected)
@@ -3203,7 +3261,7 @@ PAIR_XAXPOS CChartContainer::GetXAxisPos(RectF rChartF, double minY, double maxY
 PAIR_YAXPOS CChartContainer::GetYAxisPos(RectF rChartF, double startX, double endX)
 {
 // Y axis
-  AX_XPOS axXPos;;
+  AX_XPOS axXPos;
   float horzOffs;
 
   if ((startX < 0)&&(endX > 0))
@@ -3259,10 +3317,10 @@ bool CChartContainer::ShowDataView(CChart* chartPtr, bool bClearMap, bool bRefre
 
       BOOL bRes =  m_pChartDataView->CreateEx(0,
                                  AfxRegisterWndClass(CS_HREDRAW|CS_VREDRAW|CS_SAVEBITS),
-                                 _T("Chart Data View"), 
+                                 _T("Chart Data View"),
                                  WS_POPUPWINDOW|WS_CAPTION|WS_MINIMIZEBOX|WS_VISIBLE,
                                  dataViewRect.left, dataViewRect.top, dataViewRect.Width(), dataViewRect.Height(),
-                                 NULL, 
+                                 NULL,
                                  NULL,
                                  NULL);
       if (!bRes)
@@ -3309,7 +3367,7 @@ bool CChartContainer::ShowDataView(const string_t& szChartName, bool bRefresh)
   if (selChartIdx == -1)
     return false;
 
-  CChart* chartPtr = GetChart(chartIdx);      
+  CChart* chartPtr = GetChart(chartIdx);
   return ShowDataView(chartPtr, bRefresh);
 }
 
@@ -3361,7 +3419,7 @@ void CChartContainer::MoveChartsByArrowKeysX(UINT nChar)
     deltaX = MOVE_DELTAX*(m_endX - m_startX);
   else if (nChar == VK_LEFT)
     deltaX = -MOVE_DELTAX*(m_endX - m_startX);
-  else 
+  else
     return;
 
   MoveContainerChartsX(deltaX, true);
@@ -3383,14 +3441,14 @@ void CChartContainer::ChangeLocScaleYByArrowKeys(UINT nChar)
 
         switch (nChar)
         {
-        case VK_DOWN: locScY = max(locScY - deltaK, DELTA_LOCY);      break; 
-        case VK_UP:   locScY += deltaK;                               break; 
-        case VK_PRIOR: locScY += 10.0*deltaK;                         break; 
+        case VK_DOWN: locScY = max(locScY - deltaK, DELTA_LOCY);      break;
+        case VK_UP:   locScY += deltaK;                               break;
+        case VK_PRIOR: locScY += 10.0*deltaK;                         break;
         case VK_NEXT:locScY = max(locScY - 10.0*deltaK, DELTA_LOCY);  break;
         }
 
-        chartPtr->SetLocScaleY(locScY);  
-        
+        chartPtr->SetLocScaleY(locScY);
+
         if (IsLabWndExist(false))
         {
           if (m_pDataWnd->IsWindowVisible())
@@ -3411,9 +3469,9 @@ void CChartContainer::MoveChartsByArrowKeysY(UINT nChar)
   double deltaY = MOVE_DELTAY*(m_maxExtY - m_minExtY);
   switch (nChar)
   {
-    case VK_DOWN:  shiftValY = -deltaY;      break; 
-    case VK_UP:    shiftValY =  deltaY;      break; 
-    case VK_PRIOR: shiftValY = 10.0*deltaY;  break; 
+    case VK_DOWN:  shiftValY = -deltaY;      break;
+    case VK_UP:    shiftValY =  deltaY;      break;
+    case VK_PRIOR: shiftValY = 10.0*deltaY;  break;
     case VK_NEXT:  shiftValY = -10.0*deltaY; break;
   }
 
@@ -3422,10 +3480,10 @@ void CChartContainer::MoveChartsByArrowKeysY(UINT nChar)
 }
 
 // Draw functions
-PointF CChartContainer::DrawAxes(RectF rClientF,double startX, double endX, double minY, 
+PointF CChartContainer::DrawAxes(RectF rClientF,double startX, double endX, double minY,
                               double maxY, Color colAxis, Graphics* grPtr, float dpiRatio)
 {
-  Pen axisPen(colAxis, AXIS_PENWIDTH*dpiRatio);  
+  Pen axisPen(colAxis, AXIS_PENWIDTH*dpiRatio);
 
   PointF pntStartF, pntEndF, pntCoordZeroF;
 // Let's begin with X axis
@@ -3449,11 +3507,12 @@ PointF CChartContainer::DrawAxes(RectF rClientF,double startX, double endX, doub
 
   pntCoordZeroF.X = pntStartF.X;
 
-  m_axOffsXF = pntCoordZeroF.Y; 
+  m_axOffsXF = pntCoordZeroF.Y;
+
   return pntCoordZeroF;
 }
 
-void CChartContainer::DrawBkground(RectF rClientF, Color colBkground, Color colBorder, 
+void CChartContainer::DrawBkground(RectF rClientF, Color colBkground, Color colBorder,
                                                                   Graphics* grPtr)
 {
   SolidBrush bkBrush(colBkground);
@@ -3470,7 +3529,7 @@ void CChartContainer::DrawBkground(RectF rClientF, Color colBkground, Color colB
   }
 }
 
-bool CChartContainer::DrawSelPntsD(CChart* chartPtr, const MAP_SELPNTSD& mapSelPntsD, 
+bool CChartContainer::DrawSelPntsD(CChart* chartPtr, const MAP_SELPNTSD& mapSelPntsD,
                 GraphicsPath* grPathPtr, Graphics* grPtr, RectF drawRF, float dpiRatio)
 {
   if (!in_range(m_startX, m_endX, m_dataLegPntD.X))
@@ -3486,8 +3545,8 @@ bool CChartContainer::DrawSelPntsD(CChart* chartPtr, const MAP_SELPNTSD& mapSelP
 
   int chartIdx = chartPtr->GetChartIdx();
 // Find first entry
-  MAP_SELPNTSD::const_iterator itSel = mapSelPntsD.find(chartIdx); 
-  if (itSel != m_mapSelPntsD.cend())                              // The chart has selected points                         
+  MAP_SELPNTSD::const_iterator itSel = mapSelPntsD.find(chartIdx);
+  if (itSel != m_mapSelPntsD.cend())                              // The chart has selected points
   {
     size_t count = m_mapSelPntsD.count(chartIdx);
     for (size_t i = 0; i < count; ++i)
@@ -3505,7 +3564,7 @@ bool CChartContainer::DrawSelPntsD(CChart* chartPtr, const MAP_SELPNTSD& mapSelP
     if (!vDataPntsF.empty())
     {
       V_CHARTDATAF::iterator it = vDataPntsF.begin(), itE = vDataPntsF.end();
-  
+
       for (; it != itE; ++it)
       {
         PointF selPntF = *it;
@@ -3524,21 +3583,21 @@ bool CChartContainer::DrawSelPntsD(CChart* chartPtr, const MAP_SELPNTSD& mapSelP
   return false;
 }
 
-bool CChartContainer::DrawDataViewPntsD(const MAP_SELPNTSD& mapDataViewPntsD, double startX, 
+bool CChartContainer::DrawDataViewPntsD(const MAP_SELPNTSD& mapDataViewPntsD, double startX,
                           double endX, GraphicsPath* grPathPtr, Graphics* grPtr, float dpiRatio)
 {
   if (mapDataViewPntsD.empty())
     return false;
   if (NULL == GetVisibleChart(m_dataViewChartIdx))
     return false;
-  
+
   CChart* chartPtr = GetChart(m_dataViewChartIdx);
   if ((chartPtr == NULL)||!chartPtr->IsChartVisible())
     return false;
 
 // Extract dataPoints from the map into a vector
   V_CHARTDATAD vDataPntsD(mapDataViewPntsD.size());
-  transform(mapDataViewPntsD.begin(), mapDataViewPntsD.end(), vDataPntsD.begin(), 
+  transform(mapDataViewPntsD.begin(), mapDataViewPntsD.end(), vDataPntsD.begin(),
                                                        get_map_value<int, PointD>());
 // Exclude elements out of the range and convert to screen pntsF
   V_CHARTDATAF vDataPntsF;
@@ -3552,11 +3611,11 @@ bool CChartContainer::DrawDataViewPntsD(const MAP_SELPNTSD& mapDataViewPntsD, do
   V_CHARTDATAF::iterator itE = vDataPntsF.end();
   for (; it != itE; ++it)
   {
-    RectF rPntF = RectFFromCenterF(*it, dpiRatio*(CHART_DTPNTSZ + 2.0f), 
+    RectF rPntF = RectFFromCenterF(*it, dpiRatio*(CHART_DTPNTSZ + 2.0f),
                                                     dpiRatio*(CHART_DTPNTSZ+ 2.0f));
     grPathPtr->AddEllipse(rPntF);
   }
-  
+
   Pen selPen(m_colDataViewPnts, dpiRatio*2.0f);
   grPtr->DrawPath(&selPen, grPathPtr);
   grPathPtr->Reset();
@@ -3594,7 +3653,7 @@ void CChartContainer::DrawSelLine(RectF clRF, Graphics* grPtr, int selChartIdx, 
       PointF pntF = m_pMatrixD->TransformToPntF(locScY, pntD);
       if (clRF.Contains(pntF))
       {
-        bShowLine = true; 
+        bShowLine = true;
         break;
       }
     }
@@ -3620,7 +3679,12 @@ void CChartContainer::DrawAxXBoundaryStr(RectF boundRF, Graphics* grPtr, float d
   strStartX = m_labelX + strSpace + m_pLabValStrFnPtr(m_startX, m_precision, bAddEqSign);
   strEndX   = m_labelX + strSpace + m_pLabValStrFnPtr(m_endX, m_precision, bAddEqSign);
 
+#ifdef _UNICODE
   FontFamily fontFamily(_T("Verdana"));
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W("Verdana"));
+#endif
   Gdiplus::Font axFont(&fontFamily, 7.0f, FontStyleBold);
   grPtr->SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
 
@@ -3629,8 +3693,13 @@ void CChartContainer::DrawAxXBoundaryStr(RectF boundRF, Graphics* grPtr, float d
   RectF startRF, endRF;
   PointF startPntF, endPntF;
 
-  grPtr->MeasureString(strStartX.c_str(), -1, &axFont, boundRF, &startRF); 
+#ifdef _UNICODE
+  grPtr->MeasureString(strStartX.c_str(), -1, &axFont, boundRF, &startRF);
   grPtr->MeasureString(strEndX.c_str(), -1, &axFont, boundRF, &endRF);
+#else if _MBCS
+  grPtr->MeasureString(CA2W(strStartX.c_str()), -1, &axFont, boundRF, &startRF);
+  grPtr->MeasureString(CA2W(strEndX.c_str()), -1, &axFont, boundRF, &endRF);
+#endif
 
   if ((m_axYPos == MIDDLE)||(m_axYPos == TOP))
   {
@@ -3673,12 +3742,20 @@ void CChartContainer::DrawAxXBoundaryStr(RectF boundRF, Graphics* grPtr, float d
 
   SolidBrush axBkBrush(m_colBkground);
   SolidBrush axLabBr(m_colAxis);
-  
+
   grPtr->FillRectangle(&axBkBrush, startRF);
+#ifdef _UNICODE
   grPtr->DrawString(strStartX.c_str(), -1, &axFont, startPntF, &axLabBr);
+#else if _MBCS
+  grPtr->DrawString(CA2W(strStartX.c_str()), -1, &axFont, startPntF, &axLabBr);
+#endif
 
   grPtr->FillRectangle(&axBkBrush, endRF);
+#ifdef _UNICODE
   grPtr->DrawString(strEndX.c_str(), -1, &axFont, endPntF, &axLabBr);
+#else if _MBCS
+  grPtr->DrawString(CA2W(strEndX.c_str()), -1, &axFont, endPntF, &axLabBr);
+#endif
 }
 
 // Used to draw Zoom Border out of OnPaint function
@@ -3838,12 +3915,506 @@ void  CChartContainer::DrawGrid(RectF boundRF, PointF coordOrigF, Graphics* grPt
     grPtr->DrawLine(&gridPen, xF, limTop, xF, limBottom);
     xF += fDeltaX;
   }
- 
+
   xF = coordOrigF.X - fDeltaX;
   while (xF > limLeft)
   {
     grPtr->DrawLine(&gridPen, xF, limTop, xF, limBottom);
     xF -= fDeltaX;
+  }
+}
+
+
+void  CChartContainer::DrawGridWithCoordinates(RectF boundRF, PointF coordOrigF, Graphics* grPtr, float dpiRatio)
+{
+    // If empty return
+    if (m_mapCharts.empty())
+    {
+        return;
+    }
+
+  string_t strStartX, strEndX;
+  string_t strSpace(_T(" "));
+  //strStartX = m_labelX + strSpace + m_pLabValStrFnPtr(m_startX, m_precision, bAddEqSign);
+  //strEndX   = m_labelX + strSpace + m_pLabValStrFnPtr(m_endX, m_precision, bAddEqSign);
+  strStartX = m_pLabValStrFnPtr(m_startX, m_precision, false);
+  strEndX   = m_pLabValStrFnPtr(m_endX, m_precision, false);
+
+#ifdef _UNICODE
+  FontFamily fontFamily(_T("Verdana"));
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W("Verdana"));
+#endif
+  Gdiplus::Font axFont(&fontFamily, 7.0f, FontStyleBold);
+  grPtr->SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
+
+// Measure strings
+  //boundRF.Inflate(-dpiRatio*2.0f, -dpiRatio*2.0f);
+  RectF startRF, endRF;
+  PointF startPntF, endPntF;
+
+#ifdef _UNICODE
+  grPtr->MeasureString(strStartX.c_str(), -1, &axFont, boundRF, &startRF);
+  grPtr->MeasureString(strEndX.c_str(), -1, &axFont, boundRF, &endRF);
+#else if _MBCS
+  grPtr->MeasureString(CA2W(strStartX.c_str()), -1, &axFont, boundRF, &startRF);
+  grPtr->MeasureString(CA2W(strEndX.c_str()), -1, &axFont, boundRF, &endRF);
+#endif
+
+  if ((m_axYPos == MIDDLE)||(m_axYPos == TOP))
+  {
+    startPntF.Y = m_axOffsXF + dpiRatio*DR_SPACE;
+    endPntF.Y    = m_axOffsXF + dpiRatio*DR_SPACE;
+    if ((m_axYPos == MIDDLE)&&((endPntF.Y + startRF.Width) > boundRF.GetBottom()))
+    {
+       startPntF.Y = m_axOffsXF - startRF.Height - dpiRatio*(3.0f + DR_SPACE);
+       endPntF.Y   = m_axOffsXF - endRF.Height - dpiRatio*(3.0f + DR_SPACE);
+    }
+  }
+  else if (m_axYPos == BOTTOM)
+  {
+    startPntF.Y = m_axOffsXF - startRF.Height - dpiRatio*(3.0f + DR_SPACE);
+    endPntF.Y   = m_axOffsXF - endRF.Height - dpiRatio*(3.0f + DR_SPACE);
+  }
+
+  if (m_axXPos == BETWEEN)
+  {
+    startPntF.X = startRF.X  + dpiRatio*DR_SPACE;
+    endPntF.X   = boundRF.GetRight() - endRF.Width - dpiRatio*DR_SPACE;
+  }
+  else if (m_axXPos == LEFT)
+  {
+    startPntF.X = startRF.X  + dpiRatio*(3.0f + DR_SPACE);
+    endPntF.X   = boundRF.GetRight() - endRF.Width - dpiRatio*DR_SPACE;
+  }
+  else if (m_axXPos == RIGHT)
+  {
+    startPntF.X = startRF.X  + dpiRatio*DR_SPACE;
+    endPntF.X   = boundRF.GetRight() - endRF.Width - dpiRatio*(3.0f + DR_SPACE);
+  }
+  else
+    return;
+
+  startRF.X = startPntF.X;
+  startRF.Y = startPntF.Y;
+  endRF.X   = endPntF.X;
+  endRF.Y   = endPntF.Y;
+
+  SolidBrush axBkBrush(m_colBkground);
+  SolidBrush axLabBr(m_colAxis);
+
+  // Create fill for background of strStartX.c_str() text
+//  grPtr->FillRectangle(&axBkBrush, startRF);
+//#ifdef _UNICODE
+//  grPtr->DrawString(strStartX.c_str(), -1, &axFont, startPntF, &axLabBr);
+//#else if _MBCS
+//  grPtr->DrawString(CA2W(strStartX.c_str()), -1, &axFont, startPntF, &axLabBr);
+//#endif
+
+//  grPtr->FillRectangle(&axBkBrush, endRF);
+//#ifdef _UNICODE
+//  grPtr->DrawString(strEndX.c_str(), -1, &axFont, endPntF, &axLabBr);
+//#else if _MBCS
+//  grPtr->DrawString(CA2W(strEndX.c_str()), -1, &axFont, endPntF, &axLabBr);
+//#endif
+
+  // DrawGrid
+  float fDeltaX = boundRF.Width/10.0f;
+  float fDeltaY = boundRF.Height/10.0f;
+
+  float limTop    = boundRF.GetTop();
+  float limBottom = boundRF.GetBottom();
+  float limLeft   = boundRF.GetLeft();
+  float limRight  = boundRF.GetRight();
+
+  Pen gridPen(m_colGrid, 1.0f*dpiRatio);
+  gridPen.SetDashStyle(DashStyleDash);
+  gridPen.SetDashCap(DashCapRound);
+
+
+
+
+
+      //MAP_CHARTS::iterator it = m_mapCharts.begin();
+      //MAP_CHARTS::iterator itE = m_mapCharts.end();
+      //for (; it != itE; ++it)
+      //{
+      //  CChart* chartPtr = it->second;
+      //  if (chartPtr->IsChartVisible() == false)
+      //    continue;
+      //  if (chartPtr->m_vDataPnts.size() == 0)
+      //    continue;
+      //  chartPtr->DrawChartCurve(chartPtr->m_vDataPnts, m_startX, m_endX,
+      //                                                 m_pMatrixD, &grPath, grPtr);
+      //}
+
+
+  // Get the color of the labels for each Y axis
+  auto iter = m_mapCharts.begin();
+  auto second_chart = (*iter).second;
+  SolidBrush axY1LabBr((*iter).second->GetChartColor());
+  Color temp((*m_mapCharts.begin()).second->GetChartColor());
+  bool use_second_y_axis(false);
+  if ( m_mapCharts.size() > 1 )
+  {
+      ++iter;
+      temp = (*iter).second->GetChartColor();
+      use_second_y_axis = true;
+      second_chart = (*iter).second;
+  }
+
+  SolidBrush axY2LabBr(temp);
+
+  /////////////////////// Y-AXIS //////////////////////////
+  //
+  // Y-Axis Labels and verticle grid lines
+  // Negative Side of X-Axis
+  // Work from Top (Least Negitive) to Bottom (Most Negative)
+  //
+  auto delta_coord((m_maxExtY-m_minExtY)/10.0);
+  if ( 0.0f > delta_coord )
+  {
+      delta_coord *= -1.0f;
+  }
+
+  // Needed to account for moving the data around with the arrow keys.
+  //if ( m_vHistY.empty() || MODE_MOVEY == m_chModeY || MODE_MOVEDY == m_chModeY )
+  //{
+  //    // The Y zoom history still retains the 80% window deflation
+  //    delta_coord /= 0.8;
+  //}
+
+  float xF, yF;
+  //auto curr_coord(((0.0f < m_maxExtY)||are_equal(0.0f, m_maxExtY))? -1.0f*delta_coord : ( m_vHistY.empty() )? m_maxExtY : m_maxExtY - delta_coord);
+  auto curr_coord(m_maxExtY - delta_coord);
+  auto almost_zero( abs(delta_coord / pow(10.0,m_precision)));
+  RectF measure_width_height;
+  RectF reuse_X_value = startRF;
+
+  yF = coordOrigF.Y + fDeltaY;
+  while (yF < limBottom)
+  {
+    grPtr->DrawLine(&gridPen, limLeft, yF, limRight, yF);
+    string_t coord = m_pLabValStrFnPtr(curr_coord, m_precision, false);
+    if (yF < (limBottom-fDeltaX/4))
+    {
+        // Center the label on the grid line.
+        reuse_X_value.Y = static_cast<Gdiplus::REAL>(yF - startRF.Height/2.0);
+    }
+    else
+    {
+        // Do not center the label on the line next to the edge.
+        // Right Justify
+        reuse_X_value.Y = static_cast<Gdiplus::REAL>(yF - startRF.Height);
+    }
+
+#ifdef _UNICODE
+    grPtr->MeasureString(coord.c_str(), -1, &axFont, boundRF, &measure_width_height);
+    reuse_X_value.Width = measure_width_height.Width;
+    reuse_X_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_X_value);
+    grPtr->DrawString(coord.c_str(), -1, &axFont, PointF(limLeft+5, reuse_X_value.Y), &axY1LabBr);
+    if ( use_second_y_axis )
+    {
+        auto fcn_ptr(second_chart->GetLabYValStrFnPtr());
+        coord = fcn_ptr( curr_coord, m_precision, false );
+        grPtr->MeasureString(coord.c_str(), -1, &axFont, boundRF, &measure_width_height);
+        reuse_X_value.Width = measure_width_height.Width;
+        reuse_X_value.Height = measure_width_height.Height;
+        RectF copy = reuse_X_value;
+        copy.X = limRight-reuse_X_value.Width-8;
+        grPtr->FillRectangle(&axBkBrush, copy);
+        grPtr->DrawString(coord.c_str(), -1, &axFont, PointF(copy.X, copy.Y), &axY2LabBr);
+    }
+#else if _MBCS
+    grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+    reuse_X_value.Width = measure_width_height.Width;
+    reuse_X_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_X_value);
+    grPtr->DrawString(CA2W(coord.c_str()), -1, &axFont, PointF(limLeft+5, reuse_X_value.Y), &axY1LabBr);
+    if ( use_second_y_axis )
+    {
+        auto fcn_ptr(second_chart->GetLabYValStrFnPtr());
+        coord = fcn_ptr( curr_coord, m_precision, false );
+        grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+        reuse_X_value.Width = measure_width_height.Width;
+        reuse_X_value.Height = measure_width_height.Height;
+        RectF copy = reuse_X_value;
+        copy.X = limRight-reuse_X_value.Width-8;
+        grPtr->FillRectangle(&axBkBrush, copy);
+        grPtr->DrawString(CA2W(coord.c_str()), -1, &axFont, PointF(copy.X, copy.Y), &axY2LabBr);
+    }
+#endif
+    curr_coord -= delta_coord;
+    yF += fDeltaY;
+  }
+
+  //
+  // Y-Axis Labels and verticle grid lines
+  // Positive Side of X-Axis
+  // Work from Bottom (Least Positive) to Top (Most Positive)
+  //
+
+  //curr_coord = ((0.0f > m_minExtY)||are_equal(m_minExtY, 0.0f))? delta_coord : ( m_vHistY.empty() )? m_minExtY : m_minExtY + delta_coord;
+  curr_coord = m_minExtY + delta_coord;
+
+  yF = coordOrigF.Y - fDeltaY;
+  while (yF > limTop)
+  {
+    grPtr->DrawLine(&gridPen, limLeft, yF, limRight, yF);
+    string_t coord = m_pLabValStrFnPtr(curr_coord, m_precision, false);
+    if (yF < (limTop+fDeltaX/4))
+    {
+        // Center the label on the grid line.
+        reuse_X_value.Y = yF;
+    }
+    else
+    {
+        // Do not center the label on the line next to the edge.
+        // Bottom Justify
+        reuse_X_value.Y = static_cast<Gdiplus::REAL>(yF - startRF.Height/2.0);
+    }
+
+#ifdef _UNICODE
+    grPtr->MeasureString(coord.c_str(), -1, &axFont, boundRF, &measure_width_height);
+    reuse_X_value.Width = measure_width_height.Width;
+    reuse_X_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_X_value);
+    grPtr->DrawString(coord.c_str(), -1, &axFont, PointF(limLeft+5, reuse_X_value.Y), &axY1LabBr);
+    if ( use_second_y_axis )
+    {
+        auto fcn_ptr(second_chart->GetLabYValStrFnPtr());
+        coord = fcn_ptr( curr_coord, m_precision, false );
+        grPtr->MeasureString(coord.c_str(), -1, &axFont, boundRF, &measure_width_height);
+        reuse_X_value.Width = measure_width_height.Width;
+        reuse_X_value.Height = measure_width_height.Height;
+        RectF copy = reuse_X_value;
+        copy.X = limRight-reuse_X_value.Width-8;
+        grPtr->FillRectangle(&axBkBrush, copy);
+        grPtr->DrawString(coord.c_str(), -1, &axFont, PointF(copy.X, copy.Y), &axY2LabBr);
+    }
+#else if _MBCS
+    grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+    reuse_X_value.Width = measure_width_height.Width;
+    reuse_X_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_X_value);
+    grPtr->DrawString(CA2W(coord.c_str()), -1, &axFont, PointF(limLeft+5, reuse_X_value.Y), &axY1LabBr);
+    if ( use_second_y_axis )
+    {
+        auto fcn_ptr(second_chart->GetLabYValStrFnPtr());
+        coord = fcn_ptr( curr_coord, m_precision, false );
+        grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+        reuse_X_value.Width = measure_width_height.Width;
+        reuse_X_value.Height = measure_width_height.Height;
+        RectF copy = reuse_X_value;
+        copy.X = limRight-reuse_X_value.Width-8;
+        grPtr->FillRectangle(&axBkBrush, copy);
+        grPtr->DrawString(CA2W(coord.c_str()), -1, &axFont, PointF(copy.X, copy.Y), &axY2LabBr);
+    }
+#endif
+    curr_coord += delta_coord;
+    yF -= fDeltaY;
+  }
+
+
+  //
+
+  /////////////////////// X-AXIS //////////////////////////
+  //
+  //
+  // Print the origin label for X
+  //
+
+  delta_coord = (m_endX-m_startX)/10.0;
+  if ( 0.0f > delta_coord )
+  {
+      delta_coord *= -1.0f;
+  }
+  almost_zero = abs(delta_coord / pow(10.0,m_precision));
+  //RectF measure_width_height;
+  RectF reuse_Y_value = startRF;
+
+  if ( are_equal( m_endX, 0.0f) || are_equal( m_startX, 0.0f) || (m_endX > 0.0f && m_startX < 0.0f))
+  {
+    // Print the 0 on the axis
+    string_t coord(_T("0"));
+
+    if (( coordOrigF.X < (limRight + limLeft )) && ( coordOrigF.X > limRight ))
+    {
+        // Do not center the label on the line next to the edge.
+        // Right Justify
+        if ( almost_zero > m_endX && -1.0*almost_zero < m_endX )
+        {
+        }
+        else
+        {
+            coord = m_pLabValStrFnPtr(m_endX, m_precision, false);
+        }
+        reuse_Y_value.X = limRight - _tcslen(coord.c_str())*6;
+    }
+    else if ( coordOrigF.X >= limLeft )
+    {
+        // Center the label on the axis line.
+        reuse_Y_value.X = coordOrigF.X - _tcslen(coord.c_str())*3;
+    }
+    else if (( coordOrigF.X > 0 ) && ( coordOrigF.X < limLeft ))
+    {
+        // Do not center the label on the line next to the edge.
+        // Left Justify
+        if ( almost_zero > m_startX && -1.0*almost_zero < m_startX )
+        {
+        }
+        else
+        {
+            coord = m_pLabValStrFnPtr(m_startX, m_precision, false);
+        }
+        reuse_Y_value.X = limLeft + _tcslen(coord.c_str())*6;
+    }
+
+#ifdef _UNICODE
+    grPtr->MeasureString(coord.c_str(), -1, &axFont, boundRF, &measure_width_height);
+    reuse_Y_value.Width = measure_width_height.Width;
+    reuse_Y_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_Y_value);
+    grPtr->DrawString(coord.c_str(), -1, &axFont, PointF(reuse_Y_value.X, startPntF.Y), &axLabBr);
+#else if _MBCS
+    grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+    reuse_Y_value.Width = measure_width_height.Width;
+    reuse_Y_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_Y_value);
+    grPtr->DrawString(CA2W(coord.c_str()), -1, &axFont, PointF(reuse_Y_value.X, startPntF.Y), &axLabBr);
+#endif
+  }
+  else if ( RIGHT == m_axXPos || LEFT == m_axXPos )
+  {
+      // Need to account for the right most point when the axis is on the right and the left most point when the axis is on the left.
+      string_t coord(_T("0"));
+      if ( RIGHT == m_axXPos )
+      {
+          // Account for right most point because the axis is on the right.
+          coord = m_pLabValStrFnPtr(m_endX, m_precision, false);
+          reuse_Y_value.X = limRight - _tcslen(coord.c_str())*6;
+      }
+      else if ( LEFT == m_axXPos )
+      {
+          // Account for right most point because the axis is on the right.
+          coord = m_pLabValStrFnPtr(m_startX, m_precision, false);
+          reuse_Y_value.X = limLeft + _tcslen(coord.c_str())*3;
+      }
+
+#ifdef _UNICODE
+    grPtr->MeasureString(coord.c_str(), -1, &axFont, boundRF, &measure_width_height);
+    reuse_Y_value.Width = measure_width_height.Width;
+    reuse_Y_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_Y_value);
+    grPtr->DrawString(coord.c_str(), -1, &axFont, PointF(reuse_Y_value.X, startPntF.Y), &axLabBr);
+#else if _MBCS
+    grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+    grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+    reuse_Y_value.Width = measure_width_height.Width;
+    reuse_Y_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_Y_value);
+#endif
+  }
+
+  //
+  // X-Axis Labels and verticle grid lines
+  // Positive Side of Y-Axis
+  // Work from Left to Right
+  //
+
+  delta_coord = (m_endX-m_startX)/10.0;
+  if ( 0.0f > delta_coord )
+  {
+      delta_coord *= -1.0f;
+  }
+  curr_coord = ( 0.0f > m_startX)? delta_coord : m_startX + delta_coord;
+  xF = coordOrigF.X + fDeltaX;
+  while (xF < limRight)
+  {
+    grPtr->DrawLine(&gridPen, xF, limTop, xF, limBottom);
+    string_t coord = m_pLabValStrFnPtr(curr_coord, m_precision, false);
+    if (xF < (limRight-fDeltaX/4))
+    {
+        // Center the label on the grid line.
+        reuse_Y_value.X = xF-_tcslen(coord.c_str())*3;
+    }
+    else
+    {
+        // Do not center the label on the line next to the edge.
+        // Right Justify
+        reuse_Y_value.X = xF-_tcslen(coord.c_str())*6;
+    }
+
+#ifdef _UNICODE
+    grPtr->MeasureString(coord.c_str(), -1, &axFont, boundRF, &measure_width_height);
+    reuse_Y_value.Width = measure_width_height.Width;
+    reuse_Y_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_Y_value);
+    grPtr->DrawString(coord.c_str(), -1, &axFont, PointF(reuse_Y_value.X, startPntF.Y), &axLabBr);
+#else if _MBCS
+    grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+    reuse_Y_value.Width = measure_width_height.Width;
+    reuse_Y_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_Y_value);
+    grPtr->DrawString(CA2W(coord.c_str()), -1, &axFont, PointF(reuse_Y_value.X, startPntF.Y), &axLabBr);
+#endif
+    xF += fDeltaX;
+    curr_coord += delta_coord;
+  }
+
+  //
+  // X-Axis Labels and verticle grid lines
+  // Negative Side of Y-Axis
+  // Work from Right to Left
+  //
+
+  //delta_coord = (m_startX-m_endX)/10.0;
+  curr_coord = m_endX - delta_coord;
+
+  if ( BETWEEN == m_axXPos )
+  {
+      // The distance between the points is correct but now we need to determine the space between the edge and the rightmost line
+      // to offset the coordinates.
+      curr_coord = -1.0f*delta_coord;
+      if ( 0.0f < curr_coord )
+      {
+          curr_coord *= -1.0f;
+      }
+  }
+
+  xF = coordOrigF.X - fDeltaX;
+  while (xF > limLeft)
+  {
+    grPtr->DrawLine(&gridPen, xF, limTop, xF, limBottom);
+    string_t coord = m_pLabValStrFnPtr(curr_coord, m_precision, false);
+    if (xF > (limLeft+fDeltaX/4))
+    {
+        // Center the label on the grid line.
+        reuse_Y_value.X = xF-_tcslen(coord.c_str())*3;
+    }
+    else
+    {
+        // Do not center the label on the line next to the edge.
+        reuse_Y_value.X = xF;
+    }
+
+#ifdef _UNICODE
+    grPtr->MeasureString(coord.c_str(), -1, &axFont, boundRF, &measure_width_height);
+    reuse_Y_value.Width = measure_width_height.Width;
+    reuse_Y_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_Y_value);
+    grPtr->DrawString(coord.c_str(), -1, &axFont, PointF(reuse_Y_value.X, startPntF.Y), &axLabBr);
+#else if _MBCS
+    grPtr->MeasureString(CA2W(coord.c_str()), -1, &axFont, boundRF, &measure_width_height);
+    reuse_Y_value.Width = measure_width_height.Width;
+    reuse_Y_value.Height = measure_width_height.Height;
+    grPtr->FillRectangle(&axBkBrush, reuse_Y_value);
+    grPtr->DrawString(CA2W(coord.c_str()), -1, &axFont, PointF(reuse_Y_value.X, startPntF.Y), &axLabBr);
+#endif
+    xF -= fDeltaX;
+    curr_coord -= delta_coord;
   }
 }
 
@@ -3860,26 +4431,53 @@ void CChartContainer::DrawContainerToBmp(Rect rGdi, Bitmap& clBmp)
   if (m_mapCharts.size() > 0)
   {
     RestoreModeX();  // Might be in the middle of settung zoon borders; annuls the mode
-    RectF drawRF = rGdiF;   
+    RectF drawRF = rGdiF;
     drawRF.Inflate(-DR_SPACE, -DR_SPACE);
- 
+
     if (!HasChartWithData(-1))
       DrawGrid(drawRF, PointF(0.0f, 0.0f), grPtr);
     else
     {
 // Draw axes
       PointF pntOrigF = DrawAxes(drawRF, m_startX, m_endX, m_minExtY, m_maxExtY, m_colAxis, grPtr);
-// Draw a grid    
-      DrawGrid(drawRF, pntOrigF, grPtr);
+// Draw a grid
+      //DrawGrid(drawRF, pntOrigF, grPtr);
+        if ( use_coordinates )
+        {
+            DrawGridWithCoordinates(drawRF, pntOrigF, grPtr);
+        }
+        else
+        {
+            DrawGrid(drawRF, pntOrigF, grPtr);
+        }
 
 // Update scales
-      std::pair<double, double> pair_scales = 
+      std::pair<double, double> pair_scales =
       UpdateScales(drawRF, m_startX, m_endX, m_minExtY, m_maxExtY);
       m_scX = pair_scales.first;
       m_scY = pair_scales.second;
+
+      // Added by SGS to solve problem with all negative or positive Y-values not being centered vertically on graph
+      double offsetY(pntOrigF.Y);
+//      if ((0.0f < m_minExtY * m_maxExtY) || are_equal(m_minExtY*m_maxExtY, 0.0))
+//      {
+//          // both are positive or negative
+//          if ( 0.0f < m_maxExtY )
+//          {
+//              // both are positive so subtract the drawRF.Y value
+//              offsetY -= drawRF.Y;
+//          }
+//          else
+//          {
+//              // both are negative so add the drawRF.Y value
+//              offsetY += drawRF.Y;
+//          }
+//      }
+      // works otherwise so just use offsetY unchanged
+
 // Set transform matrix
       MatrixD matrixD;
-      matrixD.Translate(pntOrigF.X, pntOrigF.Y);
+      matrixD.Translate(pntOrigF.X, offsetY);
       matrixD.Scale(m_scX, -m_scY);
 // Account for not even axes placement
       if ((m_axXPos != BETWEEN)||(m_axYPos != MIDDLE))
@@ -3903,7 +4501,7 @@ void CChartContainer::DrawContainerToBmp(Rect rGdi, Bitmap& clBmp)
           continue;
         if (chartPtr->m_vDataPnts.size() == 0)
           continue;
-        chartPtr->DrawChartCurve(chartPtr->m_vDataPnts, m_startX, m_endX, 
+        chartPtr->DrawChartCurve(chartPtr->m_vDataPnts, m_startX, m_endX,
                                                        m_pMatrixD, &grPath, grPtr);
         if (m_bTracking)              // Draw selection points if any
           DrawSelPntsD(chartPtr, m_mapSelPntsD, &grPath, grPtr, drawRF);
@@ -3942,18 +4540,23 @@ int CChartContainer::GetScreenDpi(void)
   return scrDpiX;
 }
 
-TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF, 
+TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
                          const MAP_PRNDATA& mapPrnData, Graphics* grPtr, float dpiRatio)
 {
 // Measure strings
   float maxNamesLength = 0, maxScYLength = 0, maxValStrLength = 0;
-  float maxNameXStrLength = 0, maxStrXLength = 0; 
+  float maxNameXStrLength = 0, maxStrXLength = 0;
   float maxNameYStrLength = 0, maxStrYLength = 0;
 
-  RectF tmpRF; 
+  RectF tmpRF;
 
 // Get max size of the printing cells
+#ifdef _UNICODE
   FontFamily fontFamily(_T("Verdana"));
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W("Verdana"));
+#endif
   Gdiplus::Font labelFont(&fontFamily, 8.0f, FontStyleBold);
   grPtr->SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
 
@@ -3970,7 +4573,11 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
 
     if (!tmpStr.empty())
     {
+#ifdef _UNICODE
       grPtr->MeasureString(tmpStr.c_str(), -1, &labelFont, namesRF, &tmpRF);
+#else if _MBCS
+      grPtr->MeasureString(CA2W(tmpStr.c_str()), -1, &labelFont, namesRF, &tmpRF);
+#endif
       if (tmpRF.Width > maxNamesLength )
         maxNamesLength = tmpRF.Width;
     }
@@ -3978,7 +4585,11 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
     tmpStr = get<IDX_SCY>(tuple_chart);
     if (!tmpStr.empty())
     {
+#ifdef _UNICODE
       grPtr->MeasureString(tmpStr.c_str(), -1, &labelFont, namesRF, &tmpRF);
+#else if _MBCS
+      grPtr->MeasureString(CA2W(tmpStr.c_str()), -1, &labelFont, namesRF, &tmpRF);
+#endif
       if (tmpRF.Width > maxScYLength)
         maxScYLength = tmpRF.Width;
     }
@@ -3986,7 +4597,11 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
     tmpStr = get<IDX_VAL>(tuple_chart);
     if (!tmpStr.empty())  // If empty, no selected points
     {
+#ifdef _UNICODE
       grPtr->MeasureString(tmpStr.c_str(), -1, &labelFont, namesRF, &tmpRF);
+#else if _MBCS
+      grPtr->MeasureString(CA2W(tmpStr.c_str()), -1, &labelFont, namesRF, &tmpRF);
+#endif
       if (tmpRF.Width > maxValStrLength)
         maxValStrLength = tmpRF.Width;
     }
@@ -3995,14 +4610,22 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
     tmpStr = get<IDX_NAMEX>(tuple_chart);
     if (!tmpStr.empty())
     {
+#ifdef _UNICODE
       grPtr->MeasureString(tmpStr.c_str(), -1, &labelFont, namesRF, &tmpRF);
+#else if _MBCS
+      grPtr->MeasureString(CA2W(tmpStr.c_str()), -1, &labelFont, namesRF, &tmpRF);
+#endif
       if (tmpRF.Width > maxNameXStrLength)
         maxNameXStrLength = tmpRF.Width;
     }
 
 // X values
     tmpStr = get<IDX_X>(tuple_chart);
+#ifdef _UNICODE
     grPtr->MeasureString(tmpStr.c_str(), -1, &labelFont, namesRF, &tmpRF);
+#else if _MBCS
+    grPtr->MeasureString(CA2W(tmpStr.c_str()), -1, &labelFont, namesRF, &tmpRF);
+#endif
     if (tmpRF.Width > maxStrXLength)
       maxStrXLength = tmpRF.Width;
 
@@ -4010,14 +4633,22 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
     tmpStr = get<IDX_NAMEY>(tuple_chart);
     if (!tmpStr.empty())
     {
+#ifdef _UNICODE
       grPtr->MeasureString(tmpStr.c_str(), -1, &labelFont, namesRF, &tmpRF);
+#else if _MBCS
+      grPtr->MeasureString(CA2W(tmpStr.c_str()), -1, &labelFont, namesRF, &tmpRF);
+#endif
       if (tmpRF.Width > maxNameYStrLength)
         maxNameYStrLength = tmpRF.Width;
     }
 
 // Y values
     tmpStr = get<IDX_Y>(tuple_chart);
+#ifdef _UNICODE
     grPtr->MeasureString(tmpStr.c_str(), -1, &labelFont, namesRF, &tmpRF);
+#else if _MBCS
+    grPtr->MeasureString(CA2W(tmpStr.c_str()), -1, &labelFont, namesRF, &tmpRF);
+#endif
     if (tmpRF.Width > maxStrYLength)
       maxStrYLength = tmpRF.Width;
 
@@ -4029,8 +4660,8 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
   float startX = namesRF.GetLeft();
 
   float valYOffsX = endX - maxStrYLength;
-  float nameYStrOffsX = maxNameYStrLength == 0 ? valYOffsX : 
-                                valYOffsX  - maxNameYStrLength - dpiRatio*LB_BORDERSPACE;   
+  float nameYStrOffsX = maxNameYStrLength == 0 ? valYOffsX :
+                                valYOffsX  - maxNameYStrLength - dpiRatio*LB_BORDERSPACE;
   float valXOffsX = nameYStrOffsX - maxStrXLength - dpiRatio*LB_BORDERSPACE;
   float nameXStrOffsX = maxNameXStrLength == 0 ? valXOffsX :
                                 valXOffsX - maxNameXStrLength - - dpiRatio*LB_BORDERSPACE;
@@ -4046,7 +4677,7 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
   int stepsY = 0;
   if (bulletOffsX >= startX)
   {
-    float offsShiftX = (bulletOffsX - startX)/2.0f;      // Actually startX + (bulletOffsX - startX)/2 
+    float offsShiftX = (bulletOffsX - startX)/2.0f;      // Actually startX + (bulletOffsX - startX)/2
     bulletOffsX   -= offsShiftX;
     nameStrOffsX  -= offsShiftX;
     scYOffsX      -= offsShiftX;
@@ -4083,10 +4714,10 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
 
   TUPLE_PRNLEGLAYOUT tuple_res;
 
-  get<IDX_BULLETSTART>(tuple_res) = bulletOffsX, 
+  get<IDX_BULLETSTART>(tuple_res) = bulletOffsX,
   get<IDX_NAME>(tuple_res)        = nameStrOffsX;
   get<IDX_SCY>(tuple_res)         = scYOffsX;
-  get<IDX_VAL>(tuple_res)         = valStrOffsX;;
+  get<IDX_VAL>(tuple_res)         = valStrOffsX;
   get<IDX_NAMEX>(tuple_res)       = nameXStrOffsX;
   get<IDX_X>(tuple_res)           = valXOffsX;
   get<IDX_NAMEY>(tuple_res)       = nameYStrOffsX;
@@ -4097,7 +4728,7 @@ TUPLE_PRNLEGLAYOUT CChartContainer::CalcNamesPntLayout(RectF namesRF,
   return tuple_res;
 }
 
-void CChartContainer::PrintCrossLine(PointF pntStartF, PointF pntEndF, SizeF sizeCrossF, 
+void CChartContainer::PrintCrossLine(PointF pntStartF, PointF pntEndF, SizeF sizeCrossF,
                                                Pen* penPtr, Graphics* grPtr, float dpiRatio)
 {
   PointF pntXF(dpiRatio*sizeCrossF.Width/2, 0.0f);
@@ -4118,10 +4749,10 @@ void CChartContainer::PrintCrossLine(PointF pntStartF, PointF pntEndF, SizeF siz
 
     pntStartF.X += space;
   }
-  grPtr->DrawPath(penPtr, &grPath);  
+  grPtr->DrawPath(penPtr, &grPath);
 }
 
-void CChartContainer::GetSelValString(RectF drawRF, CChart* chartPtr, double pageScY, 
+void CChartContainer::GetSelValString(RectF drawRF, CChart* chartPtr, double pageScY,
                                       MAP_PRNDATA& mapPrnData, float dpiRatio)
 {
   string_t emptyStr;
@@ -4145,7 +4776,7 @@ void CChartContainer::GetSelValString(RectF drawRF, CChart* chartPtr, double pag
   val_label_str_fn valStrFnPtr = chartPtr->GetLabYValStrFnPtr();
   drawRF.Inflate(DR_SPACE*dpiRatio, DR_SPACE*dpiRatio);
 
-  stream_t << _T("ScaleY = ") << setprecision(precisionY + 1) << scaleY 
+  stream_t << _T("ScaleY = ") << setprecision(precisionY + 1) << scaleY
          << _T(" units/inch") << _T("\n");
   get<IDX_SCY>(tuple_chart) = stream_t.str();
 
@@ -4161,7 +4792,7 @@ void CChartContainer::GetSelValString(RectF drawRF, CChart* chartPtr, double pag
     mapPrnData.insert(MAP_PRNDATA::value_type(chartIdx, tuple_chart));
   }
   else
-  { 
+  {
     size_t count = m_mapSelPntsD.count(chartIdx);
     for (size_t cnt = 0; cnt < count; ++cnt)
     {
@@ -4200,11 +4831,16 @@ void CChartContainer::GetSelValString(RectF drawRF, CChart* chartPtr, double pag
   }
 }
 
-size_t CChartContainer::PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrnData, 
+size_t CChartContainer::PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrnData,
            const TUPLE_PRNLEGLAYOUT& tuple_prnLayout, Graphics* grPtr, float dpiRatio, size_t mapOffs)
 {
 // Set the font
+#ifdef _UNICODE
   FontFamily fontFamily(_T("Verdana"));
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W("Verdana"));
+#endif
   Gdiplus::Font labelFont(&fontFamily, 8.0f, FontStyleBold);
   grPtr->SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
   float fontHeight = labelFont.GetHeight(grPtr);
@@ -4216,9 +4852,9 @@ size_t CChartContainer::PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrn
 // Get string layout; do not care whether there are val, nMEx, and nameY  strings
   float bulletStartOffsX = get<IDX_BULLETSTART>(tuple_prnLayout);
   float bulletEndX       = bulletStartOffsX + dpiRatio*LB_BULLETSZ;
-  float nmStrOffsX       = get<IDX_NAME>(tuple_prnLayout);;
+  float nmStrOffsX       = get<IDX_NAME>(tuple_prnLayout);
   float scYStrOffsX      = get<IDX_SCY>(tuple_prnLayout);
-  float valStrOffsX      = get<IDX_VAL>(tuple_prnLayout);     
+  float valStrOffsX      = get<IDX_VAL>(tuple_prnLayout);
   float nmXOffsX         = get<IDX_NAMEX>(tuple_prnLayout);
   float valXOffsX        = get<IDX_X>(tuple_prnLayout);
   float nmYOffsX         = get<IDX_NAMEY>(tuple_prnLayout);
@@ -4242,14 +4878,14 @@ size_t CChartContainer::PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrn
     bulletPen.SetColor(strColor);
     DashStyle dashStyle = get<IDX_DSTYLE>(tuple_chart);
     bulletPen.SetDashStyle(dashStyle != DashStyleCustom ? dashStyle : DashStyleSolid);
-    bulletPen.SetWidth(dashStyle != DashStyleCustom ? 
+    bulletPen.SetWidth(dashStyle != DashStyleCustom ?
                                       get<IDX_PWIDTH>(tuple_chart)*dpiRatio : dpiRatio);
     txtBr.SetColor(strColor);
 
     PointF pntStartF, pntEndF;
 
-    string_t tmpStr = get<IDX_NAME>(tuple_chart); 
-    if (!tmpStr.empty())            
+    string_t tmpStr = get<IDX_NAME>(tuple_chart);
+    if (!tmpStr.empty())
     {
       bName = false;
       pntStartF = PointF(bulletStartOffsX, lineY + fontHeight/2.0f);
@@ -4261,14 +4897,22 @@ size_t CChartContainer::PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrn
       }
       else
       {
-        PrintCrossLine(pntStartF, pntEndF, SizeF(CHART_DTPNTSZ, CHART_DTPNTSZ),  
+        PrintCrossLine(pntStartF, pntEndF, SizeF(CHART_DTPNTSZ, CHART_DTPNTSZ),
                                                       &bulletPen, grPtr, dpiRatio);
       }
 // Draw name string
+#ifdef _UNICODE
       grPtr->DrawString(tmpStr.c_str(), -1, &labelFont, PointF(nmStrOffsX, lineY), &txtBr);
-// Draw scY string 
+#else if _MBCS
+      grPtr->DrawString(CA2W(tmpStr.c_str()), -1, &labelFont, PointF(nmStrOffsX, lineY), &txtBr);
+#endif
+// Draw scY string
       tmpStr = get<IDX_SCY>(tuple_chart);
+#ifdef _UNICODE
       grPtr->DrawString(tmpStr.c_str(), -1, &labelFont, PointF(scYStrOffsX, lineY), &txtBr);
+#else if _MBCS
+      grPtr->DrawString(CA2W(tmpStr.c_str()), -1, &labelFont, PointF(scYStrOffsX, lineY), &txtBr);
+#endif
     }
     else if (bName)
     {
@@ -4285,12 +4929,20 @@ size_t CChartContainer::PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrn
         }
         else
         {
-           PrintCrossLine(pntStartF, pntEndF, SizeF(CHART_DTPNTSZ, CHART_DTPNTSZ),  
+           PrintCrossLine(pntStartF, pntEndF, SizeF(CHART_DTPNTSZ, CHART_DTPNTSZ),
                                                       &bulletPen, grPtr, dpiRatio);
         }
+#ifdef _UNICODE
         grPtr->DrawString(tmpStr.c_str(), -1, &labelFont, PointF(nmStrOffsX, lineY), &txtBr);
+#else if _MBCS
+        grPtr->DrawString(CA2W(tmpStr.c_str()), -1, &labelFont, PointF(nmStrOffsX, lineY), &txtBr);
+#endif
         tmpStr = get<IDX_SCY>(tuple_nm);
+#ifdef _UNICODE
         grPtr->DrawString(tmpStr.c_str(), -1, &labelFont, PointF(scYStrOffsX, lineY), &txtBr);
+#else if _MBCS
+        grPtr->DrawString(CA2W(tmpStr.c_str()), -1, &labelFont, PointF(scYStrOffsX, lineY), &txtBr);
+#endif
         bName = false;
         break;
       }
@@ -4298,23 +4950,51 @@ size_t CChartContainer::PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrn
 
     if (stepsY & STEPY_VALSTR)
       lineY += lineHeight;
-    
+
     tmpStr = get<IDX_VAL>(tuple_chart);
     if (!tmpStr.empty())
+    {
+#ifdef _UNICODE
       grPtr->DrawString(tmpStr.c_str(), -1, &labelFont, PointF(valStrOffsX, lineY), &txtBr);
+#else if _MBCS
+      grPtr->DrawString(CA2W(tmpStr.c_str()), -1, &labelFont, PointF(valStrOffsX, lineY), &txtBr);
+#endif
+    }
     tmpStr = get<IDX_NAMEX>(tuple_chart);
     if (!tmpStr.empty())
+    {
+#ifdef _UNICODE
       grPtr->DrawString(tmpStr.c_str(), -1, &labelFont, PointF(nmXOffsX, lineY), &txtBr);
-    grPtr->DrawString(get<IDX_X>(tuple_chart).c_str(), -1, &labelFont, 
+#else if _MBCS
+      grPtr->DrawString(CA2W(tmpStr.c_str()), -1, &labelFont, PointF(nmXOffsX, lineY), &txtBr);
+#endif
+    }
+#ifdef _UNICODE
+    grPtr->DrawString(get<IDX_X>(tuple_chart).c_str(), -1, &labelFont,
                                                           PointF(valXOffsX, lineY), &txtBr);
+#else if _MBCS
+    grPtr->DrawString(CA2W(get<IDX_X>(tuple_chart).c_str()), -1, &labelFont,
+                                                          PointF(valXOffsX, lineY), &txtBr);
+#endif
     if (stepsY & STEPY_VALY)
       lineY += lineHeight;
 
     tmpStr = get<IDX_NAMEY>(tuple_chart);
     if (!tmpStr.empty())
+    {
+#ifdef _UNICODE
       grPtr->DrawString(tmpStr.c_str(), -1, &labelFont, PointF(nmYOffsX, lineY), &txtBr);
-    grPtr->DrawString(get<IDX_Y>(tuple_chart).c_str(), -1, &labelFont, 
+#else if _MBCS
+      grPtr->DrawString(CA2W(tmpStr.c_str()), -1, &labelFont, PointF(nmYOffsX, lineY), &txtBr);
+#endif
+    }
+#ifdef _UNICODE
+    grPtr->DrawString(get<IDX_Y>(tuple_chart).c_str(), -1, &labelFont,
                                                               PointF(valYOffsX, lineY), &txtBr);
+#else if _MBCS
+    grPtr->DrawString(CA2W(get<IDX_Y>(tuple_chart).c_str()), -1, &labelFont,
+                                                              PointF(valYOffsX, lineY), &txtBr);
+#endif
 
     ++mapOffs;
     lineY += lineHeight;
@@ -4326,17 +5006,48 @@ size_t CChartContainer::PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrn
   return mapOffs;
 }
 
-string_t CChartContainer::PrintPageHeader(RectF rGdiF, const CChartContainer* pContainer, 
+void CChartContainer::PrintXAxisName(RectF namesRF, const CChartContainer* pContainer, Graphics* grPtr)
+{
+// Set the font
+#ifdef _UNICODE
+  FontFamily fontFamily(_T("Verdana"));
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W("Verdana"));
+#endif
+  Gdiplus::Font labelFont(&fontFamily, 8.0f, FontStyleBold);
+  grPtr->SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
+
+  SolidBrush brHeader((ARGB)Color::Black);
+  StringFormat strFormat;
+  strFormat.SetAlignment(StringAlignmentNear);
+  strFormat.SetLineAlignment(StringAlignmentCenter);
+
+#ifdef _UNICODE
+  grPtr->DrawString(pContainer->x_axis_label_for_printing,-1, &labelFont, PointF(namesRF.X, namesRF.Y), &brHeader);
+#else if _MBCS
+  grPtr->DrawString(CA2W(pContainer->x_axis_label_for_printing),-1, &labelFont, PointF(namesRF.X, namesRF.Y), &brHeader);
+#endif
+
+}
+
+
+string_t CChartContainer::PrintPageHeader(RectF rGdiF, const CChartContainer* pContainer,
                                                                          string_t tmStr, Graphics* grPtr)
 {
  // Form bounding rectangles
   RectF headerRF = rGdiF;
-  headerRF.Height = 80.0f; // Approx. 7 mm 
+  headerRF.Height = 80.0f; // Approx. 7 mm
   headerRF.Inflate(-200.0f, 0.0f);
   headerRF.Offset(0.0f, 250.0f);
 
 // Draw header
+#ifdef _UNICODE
   FontFamily fontFamily(_T("Verdana"));
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W("Verdana"));
+#endif
   Gdiplus::Font headerFont(&fontFamily, 16.0f, FontStyleRegular, UnitPoint);
   grPtr->SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
 
@@ -4345,19 +5056,28 @@ string_t CChartContainer::PrintPageHeader(RectF rGdiF, const CChartContainer* pC
   strFormat.SetAlignment(StringAlignmentNear);
   strFormat.SetLineAlignment(StringAlignmentCenter);
 
+#ifdef _UNICODE
   grPtr->DrawString(pContainer->m_name.c_str(),-1, &headerFont,  headerRF, &strFormat, &brHeader);
+#else if _MBCS
+  grPtr->DrawString(CA2W(pContainer->m_name.c_str()),-1, &headerFont,  headerRF, &strFormat, &brHeader);
+#endif
 
-  if (tmStr.empty())
-  {
-    // Print current local time
-    CTime tmD = CTime::GetCurrentTime();
-    CString strTmD = tmD.Format(_T("%a, %b %d, %Y, %H:%M"));
-    tmStr = string_t(strTmD);
-  }
-
-// Draw time string
-  strFormat.SetAlignment(StringAlignmentFar);
-  grPtr->DrawString(tmStr.c_str(), -1, &headerFont,  headerRF, &strFormat, &brHeader);
+// 20150303 SGS Remove the Date stamp.
+//  if (tmStr.empty())
+//  {
+//    // Print current local time
+//    CTime tmD = CTime::GetCurrentTime();
+//    CString strTmD = tmD.Format(_T("%a, %b %d, %Y, %H:%M"));
+//    tmStr = string_t(strTmD);
+//  }
+//
+//// Draw time string
+//  strFormat.SetAlignment(StringAlignmentFar);
+//#ifdef _UNICODE
+//  grPtr->DrawString(tmStr.c_str(), -1, &headerFont,  headerRF, &strFormat, &brHeader);
+//#else if _MBCS
+//  grPtr->DrawString(CA2W(tmStr.c_str()), -1, &headerFont,  headerRF, &strFormat, &brHeader);
+//#endif
 
   return tmStr;
 }
@@ -4369,7 +5089,7 @@ void CChartContainer::PrintCharts(CChartContainer* pContainer, int scrDpiX, HDC 
     pContainer->m_bAxBoundaries = true;
 
     CDC* pDC = new CDC;
-    pDC->Attach(printDC); 
+    pDC->Attach(printDC);
     Graphics* grPtr = new Graphics(printDC);
 
     grPtr->SetPageUnit(UnitDocument);
@@ -4389,7 +5109,7 @@ void CChartContainer::PrintCharts(CChartContainer* pContainer, int scrDpiX, HDC 
     tmStr = pContainer->PrintPageHeader(rGdiF, pContainer, tmStr, grPtr);
 
 // Format drawing area and draw a border
-    RectF drawRF = rGdiF;   
+    RectF drawRF = rGdiF;
     drawRF.Inflate(-200.0f, -200.0f);
     drawRF.Height = rGdiF.Width*0.75f;
     drawRF.Offset(0.0f, 200.0f);
@@ -4397,39 +5117,69 @@ void CChartContainer::PrintCharts(CChartContainer* pContainer, int scrDpiX, HDC 
     SolidBrush bkBr(pContainer->m_colBkground);
     grPtr->FillRectangle(&bkBr, drawRF);
 
-    Pen pen((ARGB)Color::Black, 3*dpiRatioX);
+    // 20150303 SGS - Reduce the width of the box around the graph.
+//    Pen pen((ARGB)Color::Black, 3*dpiRatioX);
+    Pen pen((ARGB)Color::Black, 2*dpiRatioX);
     pen.SetAlignment(PenAlignmentInset);
     grPtr->DrawRectangle(&pen, drawRF);
-// Set clipping region    
+// Set clipping region
     grPtr->SetClip(drawRF);
 
 // Draw charts
     if (pContainer->m_mapCharts.size() > 0)
     {
 // Draw axes
-      PointF pntOrigF = pContainer->DrawAxes(drawRF, pContainer->m_startX, pContainer->m_endX, 
+      PointF pntOrigF = pContainer->DrawAxes(drawRF, pContainer->m_startX, pContainer->m_endX,
                         pContainer->m_minExtY, pContainer->m_maxExtY, pContainer->m_colAxis, grPtr);
 // Draw Grid
-      pContainer->DrawGrid(drawRF, pntOrigF, grPtr, dpiRatioX);
+      //pContainer->DrawGrid(drawRF, pntOrigF, grPtr, dpiRatioX);
+        if ( pContainer->use_coordinates )
+        {
+            pContainer->DrawGridWithCoordinates(drawRF, pntOrigF, grPtr, dpiRatioX);
+        }
+        else
+        {
+            pContainer->DrawGrid(drawRF, pntOrigF, grPtr, dpiRatioX);
+        }
+
 // Set margins for drawing
-      drawRF.Inflate(-DR_SPACE*dpiRatioX, -DR_SPACE*dpiRatioX);
+      //drawRF.Inflate(-DR_SPACE*dpiRatioX, -DR_SPACE*dpiRatioX);
 // Update scales
-      std::pair <double, double> pair_scales = 
-        pContainer->UpdateScales(drawRF, pContainer->m_startX,pContainer->m_endX, 
+      std::pair <double, double> pair_scales =
+        pContainer->UpdateScales(drawRF, pContainer->m_startX,pContainer->m_endX,
                                                       pContainer->m_minExtY, pContainer->m_maxExtY);
       pContainer->m_scX = pair_scales.first;
       pContainer->m_scY = pair_scales.second;
+
+      // Added by SGS to solve problem with all negative or positive Y-values not being centered vertically on graph
+      double offsetY(pntOrigF.Y);
+      //if ((0.0f < pContainer->m_minExtY * pContainer->m_maxExtY) || are_equal(pContainer->m_minExtY * pContainer->m_maxExtY, 0.0))
+   //   {
+   //       // both are positive or negative
+   //       if ( 0.0f < pContainer->m_maxExtY )
+   //       {
+   //           // both are positive so subtract the drawRF.Y value
+            //  offsetY -= drawRF.Height / 10.0;
+   //       }
+   //       else
+   //       {
+   //           // both are negative so add the drawRF.Y value
+            //  offsetY += drawRF.Height / 10.0;
+   //       }
+   //   }
+      // works otherwise so just use offsetY unchanged
+
 // Set transform matrix
       MatrixD matrixD;
-      matrixD.Translate(pntOrigF.X, pntOrigF.Y); // Add drawRF
+      matrixD.Translate(pntOrigF.X, offsetY); // Add drawRF
       matrixD.Scale(float(pContainer->m_scX), float(-pContainer->m_scY));
       if ((pContainer->m_axXPos != BETWEEN)||(pContainer->m_axYPos != MIDDLE))
       {
-        double translateX = (pContainer->m_axXPos == RIGHT) ? -pContainer->m_endX : 
+        double translateX = (pContainer->m_axXPos == RIGHT) ? -pContainer->m_endX :
                         (pContainer->m_axXPos == LEFT) ? -pContainer->m_startX : 0.0;
-        double translateY = (pContainer->m_axYPos == BOTTOM) ? -pContainer->m_minExtY : 
+        double translateY = (pContainer->m_axYPos == BOTTOM) ? -pContainer->m_minExtY :
                         (pContainer->m_axYPos == TOP) ? -pContainer->m_maxExtY : 0.0;
-        matrixD.Translate(float(translateX), float(translateY)); 
+        matrixD.Translate(float(translateX), float(translateY));
       }
       if (pContainer->m_pMatrixD != NULL)
         delete pContainer->m_pMatrixD;
@@ -4442,17 +5192,17 @@ void CChartContainer::PrintCharts(CChartContainer* pContainer, int scrDpiX, HDC 
       pContainer->MousePntToPntD(pntStart, pntStartD, pContainer->m_pMatrixD);
       pContainer->MousePntToPntD(pntEnd, pntEndD, pContainer->m_pMatrixD);
       double pageScY = 300.0*(pntStartD.Y - pntEndD.Y)/drawRF.Height;  // 300 dpi/inch for the Doc. Mode
-  
+
 // Begin draw all visible curves or selected only
-      int chartSelIdx = pContainer->HasSelectedChart();      
+      int chartSelIdx = pContainer->HasSelectedChart();
       MAP_LABSTR mapLabStr;
       size_t mapOffs = 0;
- 
+
       GraphicsPath grPath;            // Will be used by the drawing routines
       MAP_CHARTS::iterator it;
       if (chartSelIdx == -1)
         it = pContainer->m_mapCharts.begin();
-      else 
+      else
        it = pContainer->m_mapCharts.find(chartSelIdx);
       MAP_CHARTS::iterator itE = pContainer->m_mapCharts.end();
 
@@ -4465,7 +5215,7 @@ void CChartContainer::PrintCharts(CChartContainer* pContainer, int scrDpiX, HDC 
           continue;
         if (chartPtr->m_vDataPnts.size() == 0)
           continue;
-        chartPtr->DrawChartCurve(chartPtr->m_vDataPnts, pContainer->m_startX, pContainer->m_endX, 
+        chartPtr->DrawChartCurve(chartPtr->m_vDataPnts, pContainer->m_startX, pContainer->m_endX,
                                                          pContainer->m_pMatrixD, &grPath, grPtr, dpiRatioX);
         if (pContainer->m_bTracking)
           pContainer->DrawSelPntsD(chartPtr, pContainer->m_mapSelPntsD, &grPath, grPtr, drawRF, dpiRatioX);
@@ -4479,19 +5229,26 @@ void CChartContainer::PrintCharts(CChartContainer* pContainer, int scrDpiX, HDC 
       if (pContainer->m_bTracking)
         pContainer->DrawSelLine(drawRF, grPtr, chartSelIdx, dpiRatioX);
 
-      if (pContainer->m_bAxBoundaries)
+      // 20150303 SGS - Do NOT print the boundary values on the X-axis if
+      //if (pContainer->m_bAxBoundaries)
+      if ( !pContainer->use_coordinates && pContainer->m_bAxBoundaries )
         pContainer->DrawAxXBoundaryStr(drawRF, grPtr);
   // Now print the legend: chart names, etc.
       grPtr->ResetClip();
-      RectF namesRF(drawRF.X, drawRF.GetBottom() + 100.0f, drawRF.Width, 0.0f);
+      // 20150303 SGS - Added the printing of the X-Axis title.
+      RectF axisRF(static_cast<Gdiplus::REAL>(drawRF.X+drawRF.Width/2.0 - 400), drawRF.GetBottom() + 200.0f, drawRF.Width, 0.0f);
+      pContainer->PrintXAxisName(axisRF, pContainer, grPtr);
+      // 20150303 SGS - Set the rectangle lower to miss the bottom of the graph.
+      //RectF namesRF(drawRF.X, drawRF.GetBottom() + 100.0f, drawRF.Width, 0.0f);
+      RectF namesRF(drawRF.X, drawRF.GetBottom() + 300.0f, drawRF.Width, 0.0f);
       namesRF.Height = rGdiF.GetBottom() - namesRF.Y; // temporary; will be set in PrintChartNames
-      TUPLE_PRNLEGLAYOUT tuple_prnLayout = 
+      TUPLE_PRNLEGLAYOUT tuple_prnLayout =
         pContainer->CalcNamesPntLayout(namesRF, mapPrnData, grPtr, dpiRatioX);
       mapOffs = pContainer->PrintChartNames(namesRF, mapPrnData, tuple_prnLayout, grPtr, dpiRatioX);
       if (mapOffs < mapPrnData.size())        // Print the rest of the legend on next pages
       {
 // Get new namesRF
-        namesRF = rGdiF;   
+        namesRF = rGdiF;
         namesRF.Inflate(-200.0f, -200.0f);
         namesRF.Height = rGdiF.Height - 300.0f;
         namesRF.Offset(0.0f, 300.0f);
@@ -4501,7 +5258,7 @@ void CChartContainer::PrintCharts(CChartContainer* pContainer, int scrDpiX, HDC 
           pDC->EndPage();
           pDC->StartPage();
           pContainer->PrintPageHeader(rGdiF, pContainer, tmStr, grPtr);
-          mapOffs = pContainer->PrintChartNames(namesRF, mapPrnData, tuple_prnLayout, grPtr, 
+          mapOffs = pContainer->PrintChartNames(namesRF, mapPrnData, tuple_prnLayout, grPtr,
                                                                 dpiRatioX, mapOffs);
         }
       }
@@ -4536,7 +5293,7 @@ BEGIN_MESSAGE_MAP(CChartContainer, CWnd)
   ON_COMMAND(IDM_CHART_SAVEIMAGE, OnMnSaveImage)
   ON_COMMAND(IDM_CHART_PRINT, OnMnPrintCharts)
 
-  ON_COMMAND(IDM_CHART_ZOOMINX, OnMnZoomInX) 
+  ON_COMMAND(IDM_CHART_ZOOMINX, OnMnZoomInX)
   ON_COMMAND(IDM_CHART_MOVERIGHT, OnMnMoveRight)
   ON_COMMAND(IDM_CHART_MOVELEFT, OnMnMoveLeft)
   ON_COMMAND(IDM_CHART_ZOOMINY, OnMnZoomInY)
@@ -4578,9 +5335,9 @@ void CChartContainer::OnPaint()
 
   if (m_mapCharts.size() > 0)
   {
-    RestoreModeX();  // Might be in the middle of settung zoon borders; annuls the mode
+    RestoreModeX();  // Might be in the middle of setting zoom borders; annuls the mode
     RestoreModeY();
-    RectF drawRF = rGdiF;   
+    RectF drawRF = rGdiF;
     drawRF.Inflate(-DR_SPACE, -DR_SPACE);
 // Draw axes
     if (!HasChartWithData(-1))
@@ -4588,16 +5345,51 @@ void CChartContainer::OnPaint()
     else  // Proceed normally even with one point data
     {
       PointF pntOrigF = DrawAxes(drawRF, m_startX, m_endX, m_minExtY, m_maxExtY, m_colAxis, grPtr);
-// Draw a grid    
-      DrawGrid(drawRF, pntOrigF, grPtr);
+// Draw a grid
+        if ( use_coordinates )
+        {
+            DrawGridWithCoordinates(drawRF, pntOrigF, grPtr);
+        }
+        else
+        {
+            DrawGrid(drawRF, pntOrigF, grPtr);
+        }
+
 // Update scales
-      std::pair<double, double> pair_scales = 
+      std::pair<double, double> pair_scales =
                   UpdateScales(drawRF, m_startX, m_endX, m_minExtY, m_maxExtY);
       m_scX = pair_scales.first;
       m_scY = pair_scales.second;
+
+      // Added by SGS to solve problem with all negative or positive Y-values not being centered vertically on graph
+        double offsetY(pntOrigF.Y);
+// 20150220 10:10 Removed empty check to try and stop the jump upon first up/down shift for all positive Y data
+// ====>>> Caused a shift in Y axis being off by a grid and causing the graph with both + & - Y data to shift when the X axis is
+// shifted off the screen.  Leave it in for now.
+        //if ( m_vHistY.empty() )
+        //{
+        //    if ((0.0f < m_minExtY * m_maxExtY) || are_equal(m_minExtY*m_maxExtY, 0.0))
+        //    {
+        //        // both are positive or negative
+        //        if ( 0.0f < m_maxExtY )
+        //        {
+        //            // both are positive so subtract the drawRF.Y value
+        //            // The constant of 3 was found by visually runing it and checking where it crossed the grid lines.
+        //            offsetY -= static_cast<int>(drawRF.Y) - DR_SPACE;
+        //        }
+        //        else
+        //        {
+        //            // both are negative so add the drawRF.Y value
+        //            // The constant of 3 was found by visually runing it and checking where it crossed the grid lines.
+        //            offsetY += static_cast<int>(drawRF.Y) + DR_SPACE;
+        //        }
+        //    }
+        //}
+      // works otherwise so just use offsetY unchanged
+
 // Set transform matrix
       MatrixD matrixD;
-      matrixD.Translate(pntOrigF.X, pntOrigF.Y);
+      matrixD.Translate(pntOrigF.X, offsetY);
       matrixD.Scale(m_scX, -m_scY);
 // Account for not even axes placement
       if ((m_axXPos != BETWEEN)||(m_axYPos != MIDDLE))
@@ -4621,7 +5413,7 @@ void CChartContainer::OnPaint()
           continue;
         if (chartPtr->m_vDataPnts.size() == 0)
           continue;
-        chartPtr->DrawChartCurve(chartPtr->m_vDataPnts, m_startX, m_endX, 
+        chartPtr->DrawChartCurve(chartPtr->m_vDataPnts, m_startX, m_endX,
                                                        m_pMatrixD, &grPath, grPtr);
         if (m_bTracking&&IsLabWndExist(false))              // Draw selection points if any
           DrawSelPntsD(chartPtr, m_mapSelPntsD, &grPath, grPtr, drawRF);
@@ -4639,6 +5431,12 @@ void CChartContainer::OnPaint()
  // Transfer to the screen
   delete grPtr;
   gr.DrawImage(&clBmp, rGdi);
+  if ( first_time )
+  {
+      // If the user has set the show_legend flag then do show after the first drawing of the window.
+    SetTimer(3, 50, NULL);
+    first_time = false;
+  }
 }
 
 void CChartContainer::OnSize(UINT nType, int cx, int cy)
@@ -4708,7 +5506,7 @@ void CChartContainer::OnLButtonUp(UINT nFlags, CPoint point)
     if ((m_chModeX == MODE_ZOOMX)||(m_chModeY == MODE_ZOOMY))
     {
       UpdateContainerWnds(-1, true);
- 
+
       m_chModeX = m_vHistX.empty() ? MODE_FULLX : MODE_ZOOMEDX;
       m_chModeY = m_vHistY.empty() ? MODE_FULLY : MODE_ZOOMEDY;
     }
@@ -4731,7 +5529,7 @@ void CChartContainer::OnMButtonDown(UINT nFlags, CPoint point)
       m_dataLegPntD = PointD(DBL_MAX, DBL_MAX);
     }
   }
- 
+
   CWnd::OnMButtonDown(nFlags, point);
 }
 
@@ -4739,7 +5537,7 @@ BOOL CChartContainer::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
   if (m_bUserEnabled&&HasChartWithData(-1, true))
   {
-    if (nFlags & MK_SHIFT)            // Move 
+    if (nFlags & MK_SHIFT)            // Move
     {
       double deltaX = 0.0;
       if (zDelta < 0)
@@ -4775,7 +5573,7 @@ BOOL CChartContainer::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
             SetTimer(1, 500, NULL);
           }
 
-          chartPtr->SetLocScaleY(locScY);  
+          chartPtr->SetLocScaleY(locScY);
           RefreshWnd();
         }
       }
@@ -4804,7 +5602,7 @@ void CChartContainer::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
     }
   }
 
-  CWnd::OnKeyDown(nChar, nRepCnt, nFlags); 
+  CWnd::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 BOOL CChartContainer::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
@@ -4814,7 +5612,7 @@ BOOL CChartContainer::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
     HCURSOR hCursor = NULL;
     if (m_bTracking)
       hCursor = LoadCursor(NULL, IDC_CROSS);
-    else  
+    else
       hCursor = LoadCursor(NULL, IDC_ARROW);
     if (hCursor != NULL)
     {
@@ -4833,12 +5631,20 @@ void CChartContainer::OnTimer(UINT_PTR nIDEvent)
     KillTimer(nIDEvent);
 
     if (m_bTracking && IsLabWndExist(false))
-      UpdateDataLegend(true); 
+      UpdateDataLegend(true);
   }
-  else if (nIDEvent == 2)   // LocScY or window size was changed or size 
+  else if (nIDEvent == 2)   // LocScY or window size was changed or size
   {
     KillTimer(nIDEvent);
     UpdateContainerWnds();
+  }
+  else if (nIDEvent == 3 )
+  {
+      KillTimer(nIDEvent);
+      if ( show_legend )
+      {
+          ShowNamesLegend();
+      }
   }
 }
 
@@ -4860,12 +5666,12 @@ void CChartContainer::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
   if (!m_bUserEnabled)
     return;
   if (m_mapCharts.empty())
-    return;  
+    return;
 
   bool bHasChartWithData = HasChartWithData(-1, true);
 
   CMenu popMenu;
-  popMenu.CreatePopupMenu();   
+  popMenu.CreatePopupMenu();
   if (bHasChartWithData)
   {
     UINT chEnabledLeg = IsLabWndVisible(true) ? MF_CHECKED : MF_UNCHECKED;
@@ -4887,7 +5693,7 @@ void CChartContainer::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
   {
     popSubMenu1.AppendMenu(MF_ENABLED, IDM_CHART_SAVEIMAGE, _T("Save Charts As Image"));
     popMenu.AppendMenu(MF_SEPARATOR);
-    popSubMenu1.AppendMenuW(MF_ENABLED, IDM_CHART_PRINT, _T("Print charts"));
+    popSubMenu1.AppendMenu(MF_ENABLED, IDM_CHART_PRINT, _T("Print charts"));
   }
 
   string_t subMnStr(_T("Save"));
@@ -4895,7 +5701,7 @@ void CChartContainer::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
     subMnStr += string_t(_T("/Print"));
   subMnStr += string_t(_T(" Charts"));
 
-  popMenu.AppendMenuW(MF_STRING|MF_POPUP, UINT(popSubMenu1.m_hMenu), subMnStr.c_str());
+  popMenu.AppendMenu(MF_STRING|MF_POPUP, UINT(popSubMenu1.m_hMenu), subMnStr.c_str());
   popMenu.AppendMenu(MF_SEPARATOR);
 
   if (bHasChartWithData)
@@ -4911,7 +5717,7 @@ void CChartContainer::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
     popSubMenu2.AppendMenu(MF_ENABLED, IDM_CHART_MOVEUP, _T("Move Up"));
     popSubMenu2.AppendMenu(MF_ENABLED, IDM_CHART_MOVEDOWN, _T("Move Down"));
 
-    popMenu.AppendMenuW(MF_STRING|MF_POPUP, UINT(popSubMenu2.m_hMenu), _T("Zoom/Move"));
+    popMenu.AppendMenu(MF_STRING|MF_POPUP, UINT(popSubMenu2.m_hMenu), _T("Zoom/Move"));
     popMenu.AppendMenu(MF_SEPARATOR);
 
     if (!m_vHistX.empty())
@@ -4983,10 +5789,15 @@ void CChartContainer::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 
 void CChartContainer::OnMnShowLegend(void)
 {
-  if (IsLabWndVisible(true)) 
+  if (IsLabWndVisible(true))
+  {
     m_pLegWnd = DestroyLabWnd(m_pLegWnd);
+    show_legend = false;
+  }
   else
+  {
     ShowNamesLegend();
+  }
 }
 
 void CChartContainer::OnMnShowAxBoundaries(void)
@@ -5020,7 +5831,7 @@ void CChartContainer::OnMnViewData(void)
     AfxMessageBox(_T("View Chart Data: Has no visible or selected chart"));
     return;
   }
- 
+
   MAP_CHARTS::iterator it = m_mapCharts.find(chartSelIdx);
 
   if (it == m_mapCharts.end())
@@ -5031,7 +5842,7 @@ void CChartContainer::OnMnViewData(void)
 
 void CChartContainer::OnMnSaveCharts(void)
 {
-  if (S_FALSE == SaveChartData(string_t(_T(""))))  
+  if (S_FALSE == SaveChartData(string_t(_T(""))))
   {
     AfxMessageBox(_T("Save Failed\n Select the visible chart to save it\n")
                   _T("or remove the selection to save all visible charts\n")
@@ -5041,7 +5852,18 @@ void CChartContainer::OnMnSaveCharts(void)
 
 void CChartContainer::OnMnSaveImage(void)
 {
-  Status stat = SaveContainerImage();
+    Status stat{};
+
+    //if (0 != image_path[0])
+    //{
+    //  This method will not show the user dialog box.
+    //  string_t string{ image_path };
+    //  stat = SaveContainerImage(string);
+    //}
+    //else
+    //{
+        stat = SaveContainerImage();
+    //}
 
   if (stat != Ok)
   {
@@ -5083,7 +5905,7 @@ void CChartContainer::OnMnPrintCharts(void)
 }
 
 void CChartContainer::OnMnZoomInX(void)  // ZoomIn from the context menu
-{                
+{
   if (m_startX >= m_endX)
     return;
 
@@ -5245,7 +6067,7 @@ void CChartContainer::OnMnShowPnts(void)
     AfxMessageBox(_T("Select a chart with enough data points first"), MB_ICONERROR|MB_OK);
     return;
   }
-  
+
   chartPtr = GetChart(m_chartSelIdx);
   ENSURE(chartPtr != NULL);
   bool bShow = chartPtr->ArePntsAllowed();
@@ -5276,7 +6098,7 @@ void CChartContainer::OnMnTest(void)
 //    V_CHARTDATAD* vChartDataD = GetChartData(1);
 //    vReplaceD.assign(vChartDataD->begin(), vChartDataD->end());
 //    ReplaceChartData(0, vReplaceD, false, false, false, true);
-//    RemoveChart(1, true, true);;
+//    RemoveChart(1, true, true);
 //  vReplaceD.push_back(PointD(5.0, 1.0));
 //  V_CHARTDATAD vAppendD;
 //  vAppendD.assign(vChartDataD->begin(), vChartDataD->end());
@@ -5297,7 +6119,7 @@ void CChartContainer::OnMnTest(void)
  // string_t name3;
  // string_t name4;
  // std::tie(name1, name2, name3, name4) = tN;
- // ReplaceContainerCharts(_T("C:\\VS2012\\Projects\\ChartCtrlLib\\Charts\\Test.xml")); 
+ // ReplaceContainerCharts(_T("C:\\VS2012\\Projects\\ChartCtrlLib\\Charts\\Test.xml"));
 //  SetChartVisibility(2, false, true);
 //  ToggleChartVisibility(2);
 //  UpdateChartPenWidth(-1, 4.0f, true);
@@ -5307,7 +6129,7 @@ void CChartContainer::OnMnTest(void)
 //  vDt.push_back(0.865);
 //  vDt.push_back(0.665);
 
-//  AddChart(true, true, string_t(_T("")), string_t(_T("Zone")), 5, DashStyleSolid, 2.0f, 0.4f, 
+//  AddChart(true, true, string_t(_T("")), string_t(_T("Zone")), 5, DashStyleSolid, 2.0f, 0.4f,
 //    Color(ARGB(Color::Green)), vDt, 5.0, 1.0, true);
 //  ResetCharts();
 
@@ -5328,7 +6150,7 @@ void CChartContainer::OnMnTest(void)
 //  ZoomMoveContainer(-5.56, 4.389, true);
 //  ShowChartPoints(1, false, true);
 //  ToggleChartVisibility(1);
-//  bool bEnable = !m_bUserEnabled; 
+//  bool bEnable = !m_bUserEnabled;
 //  EnableUser(bEnable);
 // UpdateChartLocScaleY(-1, 1.5, false, true);
 //  string_t name = GetChartName(1);
@@ -5336,7 +6158,7 @@ void CChartContainer::OnMnTest(void)
 //  SetLegBkgndColor(Color(32, 230, 0, 0), true);
   Color color;
 
-    
+
 }
 
 #endif
@@ -5347,11 +6169,11 @@ void CChartContainer::UpdateDataViewPnts(int chartIdx, size_t dataID, PointD dat
 
   if (chartIdx == -1)
   {
-    m_mapDataViewPntsD.clear(); 
+    m_mapDataViewPntsD.clear();
   }
   else if (m_dataViewChartIdx == chartIdx)
   {
-    CChart* chartPtr = GetChart(chartIdx); 
+    CChart* chartPtr = GetChart(chartIdx);
     if (chartPtr != NULL)                   // Chart is not deleted
     {
       if (bAdd)
@@ -5405,7 +6227,7 @@ void CChartContainer::EqualizeVertRanges(double spaceMult, bool bRedraw)
     if (mapIt->second->HasData())
       mapCharts.insert(*mapIt);
   }
-                
+
 // Get Range
   if (mapCharts.size() > 1)
   {
@@ -5414,7 +6236,7 @@ void CChartContainer::EqualizeVertRanges(double spaceMult, bool bRedraw)
 
     V_CHR vChr(mapCharts.size());
     transform(mapCharts.cbegin(), mapCharts.cend(), vChr.begin(),
-      [](const std::pair<int, CChart*>& pair_ch) ->PAIR_CHR 
+      [](const std::pair<int, CChart*>& pair_ch) ->PAIR_CHR
         {CChart* pChart = pair_ch.second; double val = max(fabs(pChart->GetMaxValY()), fabs(pChart->GetMinValY()));
          return make_pair(val, pChart);});
 
@@ -5437,7 +6259,7 @@ void CChartContainer::EqualizeVertRanges(double spaceMult, bool bRedraw)
   }
 }
 
- 
+
 
 
 

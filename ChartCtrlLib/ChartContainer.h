@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////
 //
 //  ChartContainer.h
 //
@@ -13,7 +13,7 @@ using namespace Gdiplus;
 ///////////////////////////////////////////////////////////////////////////////
 // Struct for notifications from CChartDataView
 
-typedef struct  
+typedef struct
   {
     NMHDR nmhdr;
     bool bAdd;
@@ -33,22 +33,22 @@ class MatrixD;
 
 class CChartContainer : public CWnd
 {
-	DECLARE_DYNAMIC(CChartContainer)
+    DECLARE_DYNAMIC(CChartContainer)
 
   friend class CDataView;
 
 public:
-	CChartContainer(string_t name = string_t(_T("")));
-	virtual ~CChartContainer();
+    CChartContainer(string_t name = string_t(_T("")));
+    virtual ~CChartContainer();
 
 private:
   CChartContainer(const CChartContainer& src);
 public:
   CChartContainer& operator =(const CChartContainer& rhs);
-  bool CreateChartCtrlWnd(DWORD dwExStyle, DWORD dwStyle, const CRect& wndRect, 
+  bool CreateChartCtrlWnd(DWORD dwExStyle, DWORD dwStyle, const CRect& wndRect,
                                                        CWnd* pParent, UINT nID);
 
-public: 
+public:
   CChartContainer* CloneChartContainer(string_t name = string_t(_T("")), bool bCloneState = false);
 protected:
   CChart* CloneChart(int chartIdx, bool bCloneState = false);
@@ -78,7 +78,7 @@ public:
 // Access functions: access to m_startX, m_endX, m_minExtY, m_maxExtY
   double GetStartX(void) const {return m_startX;}
   double GetEndX(void) const {return m_endX;}
-  double GetInitialStartX(void) const;  // Returns front of m_dqHist 
+  double GetInitialStartX(void) const;  // Returns front of m_dqHist
   double GetInitialEndX(void) const;    // or m_startX if there is no history
   double GetInitialMinExtY(void) const;
   double GetInitialMaxExtY(void) const;
@@ -118,7 +118,7 @@ public:
   void SetContainerName(string_t name) { m_name = name;}
 
   string_t GetAxisXName(void) const {return m_labelX;}
-  void SetAxisXName(string_t nameX, bool bRedraw = false); 
+  void SetAxisXName(string_t nameX, bool bRedraw = false);
 // X-axis string formatting function (container)
   val_label_str_fn GetLabXValStrFnPtr(void) const {return m_pLabValStrFnPtr;}
   void SetLabXValStrFn(val_label_str_fn pLabValStrFn, bool bRedraw = false);
@@ -147,11 +147,11 @@ protected:
   CH_MODE GetChModeX(void) const {return m_chModeX;}
   CH_MODE GetChModeY(void) const {return m_chModeY;}
 
-// Calculates the transformation matrix for given client rectangle 
+// Calculates the transformation matrix for given client rectangle
   MatrixD* GetTransformMatrixD(double startX, double endX, double minY, double maxY);
-  void SetTransformMatrixD(MatrixD* pMatrixD); // Not used 
-  void SetTransformMatrixD(void); 
- 
+  void SetTransformMatrixD(MatrixD* pMatrixD); // Not used
+  void SetTransformMatrixD(void);
+
 // Iterates over charts in the container and returns min/max X or Y. Does not change the container's
 // m_startX, m_endX, m_minExtY, m_maxExtY
 public:
@@ -164,6 +164,7 @@ public:
   void UndoHistStepY(bool bRedraw = false);
 // Called by parent or owner when parent's size is changing
   void OnChangedSize(int cx, int cy);
+  void OnChangedSize(const PointT<int> pt, const int width, const int height);
 
 // Drawing the container
   void RefreshWnd(void);  // Redraws the container, excludes dataWnd
@@ -185,17 +186,17 @@ public:
 // Access to chart and container state variables
 
 // Returns the chart's minmax for X if bY == false, or for Y (if true), and true.
-// in the third element. Returns false in the third element if the chart does not exist. 
-  std::tuple<double, double, bool> GetChartBoundaries(int chartIdx, bool bY = false) const; 
+// in the third element. Returns false in the third element if the chart does not exist.
+  std::tuple<double, double, bool> GetChartBoundaries(int chartIdx, bool bY = false) const;
 // Visibility
 protected:
   CChart* GetVisibleChart(int chartIdx) const;  // Returns pointer to the (first) visible chart or NULL
 public:
   bool IsChartVisible(int chartIdx) const;
-  bool SetChartVisibility(int chartIdx, bool bVisible, bool bRedraw = false); 
+  bool SetChartVisibility(int chartIdx, bool bVisible, bool bRedraw = false);
   int ToggleChartVisibility(int chartIdx);// Returns 1 if set visible, 0 if not,
                                           // -1 if the chart does not exist
-// Chart Pen Width  
+// Chart Pen Width
   std::pair<float, bool> GetChartPenWidth(int chartIdx) const;
   bool UpdateChartPenWidth(int chartIdx, float penWidth, bool bVisibleOnly, bool bRedraw = false);// Changes all or selected pen width
 
@@ -238,9 +239,9 @@ public:
 
 // Get Chart: Returns chart pointer or NULL
 protected:
-  CChart* GetChart(int chartIdx, bool bVisibleOnly = false) const;        
+  CChart* GetChart(int chartIdx, bool bVisibleOnly = false) const;
   CChart* FindChartByName(string_t nameStr) const;
-public:   
+public:
   V_CHARTDATAD* GetChartData(int chartIdx);
   int GetChartIdx(string_t chartName) const;
 
@@ -267,25 +268,25 @@ protected:
 // Chart interface functions
 
 public:
- int AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY, int precisionY, 
-              DashStyle dashStyle, float penWidth, float tension, 
+ int AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY, int precisionY,
+              DashStyle dashStyle, float penWidth, float tension,
               Color colChart, V_CHARTDATAD& vData, bool bRedraw = false);
  // Overload for time series
- int AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY, int precisionY, 
-                DashStyle dashStyle, float penWidth, float tension, 
-                Color colChart, std::vector<double>& vTmSeries, double startX = 0.0, 
+ int AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY, int precisionY,
+                DashStyle dashStyle, float penWidth, float tension,
+                Color colChart, std::vector<double>& vTmSeries, double startX = 0.0,
                                                   double stepX = 1.0, bool bRedraw = false);
  // Overload for vector of pairs
  int AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY, int precisionY,
-                DashStyle dashStyle, float penWidth, float tension, 
-                Color colChart, std::vector<std::pair<double, double> >& vXYData, 
+                DashStyle dashStyle, float penWidth, float tension,
+                Color colChart, std::vector<std::pair<double, double> >& vXYData,
                 bool bRedraw = false);
 // Overload for vectors of doubles
- int AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY, int precisionY, 
-                DashStyle dashStyle, float penWidth, float tension, 
-                Color colChart, std::vector<double>& vX, std::vector<double>& vY, 
+ int AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY, int precisionY,
+                DashStyle dashStyle, float penWidth, float tension,
+                Color colChart, std::vector<double>& vX, std::vector<double>& vY,
                 bool bRedraw = false);
- 
+
  // Appends points to the end of chart data vector. Discards all new points with X < m_endX
   bool AppendChartData(int chartIdx, V_CHARTDATAD& vData, bool bUpdate = false);
 // Overload for time series
@@ -301,15 +302,15 @@ public:
   bool ReplaceChartData(int chartIdx, V_CHARTDATAD& vData, bool bClip = false, bool bUpdate = false,
                                            bool bVerbose = false, bool bRedraw = false);
 // Overload for time series
-  bool ReplaceChartData(int chartIdx,  std::vector<double>& vTmSeries, double startX = 0.0, 
+  bool ReplaceChartData(int chartIdx,  std::vector<double>& vTmSeries, double startX = 0.0,
      double stepX = 1.0, bool bClip = false, bool bUpdate = false, bool bVerbose = false, bool bRedraw = false);
 // Overload for vector of pairs
-  bool ReplaceChartData(int chartIdx,  std::vector<std::pair<double, double> >& vXYData, 
+  bool ReplaceChartData(int chartIdx,  std::vector<std::pair<double, double> >& vXYData,
                     bool bClip = false, bool bUpdate = false, bool bVerbose = false, bool bRedraw = false);
 // Overload for vector of doubles
-  bool ReplaceChartData(int chartIdx,  std::vector<double>& vX, std::vector<double>& vY, 
+  bool ReplaceChartData(int chartIdx,  std::vector<double>& vX, std::vector<double>& vY,
                         bool bClip = false, bool bUpdate = false, bool bVerbose = false, bool bRedraw = false);
-  
+
   void ResetCharts(bool bResetLocY = false);
   void ResetChartContainer(bool bKeepCharts = false, bool bResetCols = false);
   bool TruncateChart(int chartIdx, double startX, double endX, bool bUpdateExt = false, bool bRedraw = false);
@@ -331,10 +332,12 @@ public:
   CDataWnd* ShowDataLegend(double dataLegX); // Uses m_dataLegPntD; it is supposed to be used only programmatically
   CDataWnd* ShowNamesLegend(void);
   bool ShowChartPoints(int chartIdx, bool bShow, bool bRedraw = false);
+  bool ShowAxisCoordinates() { return use_coordinates;};
+  void ShowAxisCoordinates(bool show = true) { use_coordinates = show; };
 protected:
   CDataWnd* ShowDataLegend(CPoint pnt);
 // Uses the selected points to correct the data label and shows it in the appropriate position
-  void UpdateDataLegend(bool bChangeMatrix); 
+  void UpdateDataLegend(bool bChangeMatrix);
   void CopyDataLegendWnd(void);
 // Clear chart data view
 public:
@@ -346,17 +349,17 @@ public:
 
 public:
 // Updates container wnd and child windows
-  void UpdateContainerWnds(int chartIdx = -1, bool bMatrix = false, DATAVIEW_FLAGS dataChange = F_NODATACHANGE);   
+  void UpdateContainerWnds(int chartIdx = -1, bool bMatrix = false, DATAVIEW_FLAGS dataChange = F_NODATACHANGE);
 // To get max chart Idx in the mapCharts
   int GetMaxChartIdx(void) const;
 protected:
 // Translate the mouse coordinates to the data space (CPoint to PointD)
   void MousePntToPntD(CPoint pnt, PointD& dataPntD, MatrixD* pMatrixD, double locScY = 1.0);
 
-  double UpdateScaleX(const float drawRectWidth, double startX, double endX); 
+  double UpdateScaleX(const float drawRectWidth, double startX, double endX);
   double UpdateScaleY(const float drawRectHeight, double minY, double maxY);
 // Calculates scX, scY but does not set m_scX, m_scY
-  std::pair<double, double> UpdateScales(const RectF drawRectF, 
+  std::pair<double, double> UpdateScales(RectF &drawRectF,
                                         double minX, double maxX, double minY, double maxY);
 
 // Zoom X on mouse left clicks + MK_SHIFT
@@ -369,16 +372,16 @@ protected:
   CH_MODE RestoreModeX(void);
   CH_MODE RestoreModeY(void);
 
-// Legend 
+// Legend
   size_t PrepareDataLegend(CPoint pnt, MAP_LABSTR& mapLabels, MAP_SELPNTSD& mapSelPntsD);
-  size_t PrepareDataLegend(PointD origPntD, double epsX, MAP_LABSTR& mapLabels, 
+  size_t PrepareDataLegend(PointD origPntD, double epsX, MAP_LABSTR& mapLabels,
                                                     MAP_SELPNTSD& mapSelPntsD, bool bChangeMatrix);
   size_t PrepareNamesLegend(MAP_LABSTR& mapLabels);
-  size_t UpdateDataLegend(MAP_SELPNTSD& mapSelPntsD, MAP_LABSTR& m_mapLabs); 
+  size_t UpdateDataLegend(MAP_SELPNTSD& mapSelPntsD, MAP_LABSTR& m_mapLabs);
 
 // To use with UpdateDataLegend
 // Gets axis X pos AX_YPOS (first) and axis X float offsY(second)
-  AX_XPOS GetXAxisPos(void) const {return m_axXPos;} 
+  AX_XPOS GetXAxisPos(void) const {return m_axXPos;}
   PAIR_XAXPOS GetXAxisPos(RectF rChartF, double minY, double maxY);
 // Gets axis Y pos AX_XPOS (first) and axis Y float offsX(second)
   AX_YPOS GetYAxisPos(void) const {return m_axYPos;}
@@ -401,40 +404,42 @@ protected:
   void MoveChartsByArrowKeysY(UINT nChar);
 
 // Drawing functions
-  PointF DrawAxes(RectF rClientF, double startX, double endX, double minY, 
+  PointF DrawAxes(RectF rClientF, double startX, double endX, double minY,
          double maxY, Color colAxis, Graphics* grPtr, float dpiRatio = 1.0f);
-  void DrawBkground(RectF rClientF, Color colBkground, 
+  void DrawBkground(RectF rClientF, Color colBkground,
                               Color colBorder, Graphics* grPtr);
-  bool DrawSelPntsD(CChart* chartPtr, const MAP_SELPNTSD& mapSelPntsD, 
+  bool DrawSelPntsD(CChart* chartPtr, const MAP_SELPNTSD& mapSelPntsD,
                 GraphicsPath* grPathPtr, Graphics* grPtr, RectF drawRF, float dpiRatio = 1.0f);
-  bool DrawDataViewPntsD(const MAP_SELPNTSD& mapDataViewPntsD, double startX, double endX, 
+  bool DrawDataViewPntsD(const MAP_SELPNTSD& mapDataViewPntsD, double startX, double endX,
               GraphicsPath* grPathPtr, Graphics* grPtr, float dpiRatio = 1.0f);
   void DrawSelLine(RectF clRF, Graphics* grPtr, int selChartIdx = -1, float dpiRatio = 1.0f);
   void DrawAxXBoundaryStr(RectF boundRF, Graphics* grPtr, float dpiRtio = 1.0f);
   void DrawZoomBorderX(CPoint pnt);
   void DrawZoomBorderY(CPoint pnt);
   void DrawGrid(RectF boundRF, PointF coordOrigF, Graphics* grPtr, float dpiRatio = 1.0f);
+  void DrawGridWithCoordinates(RectF boundRF, PointF coordOrigF, Graphics* grPtr, float dpiRatio = 1.0f);
   void DrawContainerToBmp(Rect rGdi, Bitmap& clBmp);
 
 // Print's helpers
   int GetScreenDpi(void);
 
-  TUPLE_PRNLEGLAYOUT CalcNamesPntLayout(RectF namesRF, const MAP_PRNDATA& mapPrnData, 
+  TUPLE_PRNLEGLAYOUT CalcNamesPntLayout(RectF namesRF, const MAP_PRNDATA& mapPrnData,
                                                           Graphics* grPtr, float dpiRatio);
-  void PrintCrossLine(PointF pntStartF, PointF pntEndF, SizeF sizeCrossF, 
-                                        Pen* penPtr, Graphics* grPtr, float dpiRatio); 
+  void PrintCrossLine(PointF pntStartF, PointF pntEndF, SizeF sizeCrossF,
+                                        Pen* penPtr, Graphics* grPtr, float dpiRatio);
   void GetSelValString(RectF drawRF, CChart* chartPtr, double pageScY, MAP_PRNDATA& mapPrnData, float dpiRatio);
-  size_t PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrnData, 
-                         const TUPLE_PRNLEGLAYOUT& tuple_prnLayout, 
+  size_t PrintChartNames(RectF namesRF, const MAP_PRNDATA& mapPrnData,
+                         const TUPLE_PRNLEGLAYOUT& tuple_prnLayout,
                          Graphics* grPtr, float dpiRatio, size_t mapOffs = 0);
 
-  string_t PrintPageHeader(RectF rGdiF, const CChartContainer* pContainer, string_t tmStr, 
+  string_t PrintPageHeader(RectF rGdiF, const CChartContainer* pContainer, string_t tmStr,
                                                                                Graphics* grPtr);
+  void PrintXAxisName(RectF namesRF, const CChartContainer* pContainer, Graphics* grPtr);
   public:
     static void PrintCharts(CChartContainer* pContainer, int scrDpiX, HDC printDC);
 
 protected:
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 
 // Message handlers
   afx_msg void OnPaint(void);
@@ -500,7 +505,7 @@ protected:
   double m_startX;          // Start X coord
   double m_endX;            // Last X coord (not included)
   float  m_axOffsXF;        // Y Offset of X axis
-  AX_XPOS m_axXPos;         // Position of zero on the X axis 
+  AX_XPOS m_axXPos;         // Position of zero on the X axis
   AX_YPOS m_axYPos;         // Position of zero on the Y axis
   double m_scX;
   double m_scY;
@@ -512,7 +517,7 @@ protected:
   int  m_dataViewChartIdx;  // ID of the chart displayed in data view
   int  m_precision;         // Number of decimal digits after decimal point
                             // for data labels
-  double m_tmpZX;           // Temporary placeholder for zoom startX 
+  double m_tmpZX;           // Temporary placeholder for zoom startX
   double m_tmpZY;           // Temporary placexolder for zoom startY
 
   MatrixD* m_pMatrixD;      // Transform matrix from the data pnt space to the client coord
@@ -525,18 +530,25 @@ protected:
   V_HIST m_vHistY;          // Zoom & pane Y history
   MAP_CHARTS m_mapCharts;   // Container's content
   MAP_SELPNTSD m_mapSelPntsD;       // Points nearest to the sel line for data window
-  MAP_SELPNTSD m_mapDataViewPntsD;  // Chart's data points selected in the data view window 
+  MAP_SELPNTSD m_mapDataViewPntsD;  // Chart's data points selected in the data view window
 
   CDataWnd* m_pDataWnd;
   CDataWnd* m_pLegWnd;
   CChartDataView* m_pChartDataView;
 
 protected:
-  CH_MODE m_chModeX;     
-  CH_MODE m_chModeY;     
+  CH_MODE m_chModeX;
+  CH_MODE m_chModeY;
   string_t m_name;          // Container's name
   string_t m_labelX;        // X-axis name
 
   val_label_str_fn m_pLabValStrFnPtr;
+
+public:
+  bool use_coordinates;
+  bool show_legend;
+  bool first_time;
+  TCHAR x_axis_label_for_printing[200];
+  TCHAR image_path[MAX_PATH];
 };
 

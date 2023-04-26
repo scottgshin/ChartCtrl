@@ -58,8 +58,8 @@ private:
 
 public:
   static
-    HRESULT ChartDataToXML(const _TCHAR* fileName, const CChartContainer* pContainer, 
-                                                          const string_t chartName, bool bAll = false);   
+    HRESULT ChartDataToXML(const _TCHAR* fileName, const CChartContainer* pContainer,
+                                                          const string_t chartName, bool bAll = false);
   static
     HRESULT XMLToCharts(LPCTSTR fileName, CChartContainer* pContainer, const MAP_CHARTCOLS& mapCharts, bool bClearCharts);
   static
@@ -71,7 +71,7 @@ public:
 
 private:
   static
-    void AddWhiteSpaceToNode(CComPtr<MSXML2::IXMLDOMDocument> pDoc, _bstr_t strWs, 
+    void AddWhiteSpaceToNode(CComPtr<MSXML2::IXMLDOMDocument> pDoc, _bstr_t strWs,
                                                       CComPtr<MSXML2::IXMLDOMNode> pNode)
     {
       CComPtr<MSXML2::IXMLDOMText> pws;     // By default pws.p = NULL
@@ -82,7 +82,7 @@ private:
     }
 
   static
-    void AddWhiteSpaceToElement(CComPtr<MSXML2::IXMLDOMDocument> pDoc, _bstr_t strWs, 
+    void AddWhiteSpaceToElement(CComPtr<MSXML2::IXMLDOMDocument> pDoc, _bstr_t strWs,
                                                       CComPtr<MSXML2::IXMLDOMElement> pEl)
     {
       CComPtr<MSXML2::IXMLDOMText> pws;     // By default pws.p = NULL

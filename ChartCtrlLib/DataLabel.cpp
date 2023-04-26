@@ -61,12 +61,17 @@ CRect CDataWnd::CalcLabelStrRect(void)
     return CRect();
 
 // Extract typles from the map into a vector
-  V_LABSTR vLabStr(m_mapLabs.size()); 
-  transform(m_mapLabs.begin(), m_mapLabs.end(), vLabStr.begin(), 
+  V_LABSTR vLabStr(m_mapLabs.size());
+  transform(m_mapLabs.begin(), m_mapLabs.end(), vLabStr.begin(),
                                                    get_map_value<int, TUPLE_LABEL>());
 // Find selStr max length
 // Measure strings: Create font
+#ifdef _UNICODE
   FontFamily fontFamily(m_strFontFamilyName.c_str());
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W(m_strFontFamilyName.c_str()));
+#endif
   Gdiplus::Font labelFont(&fontFamily, static_cast<float>(m_fontSize), FontStyleBold);
 // Measure the max strings
   CDC* pDC = GetDC();
@@ -75,41 +80,45 @@ CRect CDataWnd::CalcLabelStrRect(void)
 
   PointF pntF(m_fOrigOffsX, 0.0f);
 
-  m_maxNameRF = for_each(vLabStr.begin(), vLabStr.end(), 
-    get_max_str<TUPLE_LABEL, IDX_LNAME>(&labelFont, &gr))._maxRF; 
+  m_maxNameRF = for_each(vLabStr.begin(), vLabStr.end(),
+    get_max_str<TUPLE_LABEL, IDX_LNAME>(&labelFont, &gr))._maxRF;
   m_maxNameRF.Width += m_fBorderSpace;
 
   if (m_bData)
   {
     string_t colonStr(_T(": "));
     RectF colonRF;
+#ifdef _UNICODE
     gr.MeasureString(colonStr.c_str(), -1, &labelFont, PointF(0.0f, 0.0f), &colonRF);
+#else if _MBCS
+    gr.MeasureString(CA2W(colonStr.c_str()), -1, &labelFont, PointF(0.0f, 0.0f), &colonRF);
+#endif
     m_maxNameRF.Width += colonRF.Width;
     m_maxNameRF.Offset(pntF);
 
     pntF.X = m_maxNameRF.GetRight();
-    m_maxNameXRF = for_each(vLabStr.begin(), vLabStr.end(), 
-                      get_max_str<TUPLE_LABEL, IDX_LNAMEX>(&labelFont, &gr))._maxRF; 
+    m_maxNameXRF = for_each(vLabStr.begin(), vLabStr.end(),
+                      get_max_str<TUPLE_LABEL, IDX_LNAMEX>(&labelFont, &gr))._maxRF;
     if (!m_maxNameXRF.IsEmptyArea())
       m_maxNameXRF.Width += m_fBorderSpace;
     m_maxNameXRF.Offset(pntF);
 
     pntF.X = m_maxNameXRF.GetRight();
-    m_maxXRF = for_each(vLabStr.begin(), vLabStr.end(), 
-                      get_max_str<TUPLE_LABEL, IDX_LX>(&labelFont, &gr))._maxRF; 
+    m_maxXRF = for_each(vLabStr.begin(), vLabStr.end(),
+                      get_max_str<TUPLE_LABEL, IDX_LX>(&labelFont, &gr))._maxRF;
     m_maxXRF.Width += m_fBorderSpace;
     m_maxXRF.Offset(pntF);
 
     pntF.X = m_maxXRF.GetRight();
-    m_maxNameYRF = for_each(vLabStr.begin(), vLabStr.end(), 
-                      get_max_str<TUPLE_LABEL, IDX_LNAMEY>(&labelFont, &gr))._maxRF; 
+    m_maxNameYRF = for_each(vLabStr.begin(), vLabStr.end(),
+                      get_max_str<TUPLE_LABEL, IDX_LNAMEY>(&labelFont, &gr))._maxRF;
     if (!m_maxNameYRF.IsEmptyArea())
       m_maxNameYRF.Width += m_fBorderSpace;
     m_maxNameYRF.Offset(pntF);
 
     pntF.X = m_maxNameYRF.GetRight();
-    m_maxYRF = for_each(vLabStr.begin(), vLabStr.end(), 
-                      get_max_str<TUPLE_LABEL, IDX_LY>(&labelFont, &gr))._maxRF; 
+    m_maxYRF = for_each(vLabStr.begin(), vLabStr.end(),
+                      get_max_str<TUPLE_LABEL, IDX_LY>(&labelFont, &gr))._maxRF;
     m_maxYRF.Width += m_fBorderSpace;
     m_maxYRF.Offset(pntF);
 
@@ -120,7 +129,7 @@ CRect CDataWnd::CalcLabelStrRect(void)
     m_maxNameRF.Offset(pntF.X, 0.0f);
     pntF.X = m_maxNameRF.GetRight();
   }
- 
+
   m_strRF = RectF(0.0f, 0.0f, pntF.X, m_maxNameRF.Height);
 
 // Set dataWnd rectangle
@@ -235,7 +244,7 @@ bool CDataWnd::CreateLegend(CWnd* pParent, CPoint origPnt, bool bData)
 
 bool CDataWnd::ShowLegendWnd()
 {
-  if (!IsWindow(m_hWnd)) 
+  if (!IsWindow(m_hWnd))
     return false;
   if (!m_mapLabs.empty())
   {
@@ -297,34 +306,55 @@ float CDataWnd::DrawLabel(const TUPLE_LABEL& tupleLabel, RectF labRect, Gdiplus:
   maxNameYRF.Offset(labRect.X, labRect.Y);
   maxValYRF.Offset(labRect.X, labRect.Y);
   PointF strOrigF(maxNameRF.X, labRect.Y);
+#ifdef _UNICODE
   grPtr->DrawString(nameStr.c_str(), -1, pFont, strOrigF, &lbBr);
+#else if _MBCS
+  USES_CONVERSION;
+  grPtr->DrawString(CA2W(nameStr.c_str()), -1, pFont, strOrigF, &lbBr);
+#endif
 
   if (m_bData)
   {
     if (!nameXStr.empty())
     {
       strOrigF.X = maxNameXRF.X;
+#ifdef _UNICODE
       grPtr->DrawString(nameXStr.c_str(), -1, pFont, strOrigF, &lbBr);
+#else if _MBCS
+      grPtr->DrawString(CA2W(nameXStr.c_str()), -1, pFont, strOrigF, &lbBr);
+#endif
     }
 
     strOrigF.X = maxValXRF.X;
+#ifdef _UNICODE
     grPtr->DrawString(valXStr.c_str(), -1, pFont, strOrigF, &lbBr);
+#else if _MBCS
+    grPtr->DrawString(CA2W(valXStr.c_str()), -1, pFont, strOrigF, &lbBr);
+#endif
 
     if (!nameYStr.empty())
     {
       strOrigF.X = maxNameYRF.X;
+#ifdef _UNICODE
       grPtr->DrawString(nameYStr.c_str(), -1, pFont, strOrigF, &lbBr);
+#else if _MBCS
+      grPtr->DrawString(CA2W(nameYStr.c_str()), -1, pFont, strOrigF, &lbBr);
+#endif
     }
 
     strOrigF.X = maxValYRF.X;
+#ifdef _UNICODE
     grPtr->DrawString(valYStr.c_str(), -1, pFont, strOrigF, &lbBr);
+#else if _MBCS
+    grPtr->DrawString(CA2W(valYStr.c_str()), -1, pFont, strOrigF, &lbBr);
+#endif
 
   }
   return labRect.Height;
 }
 
 // Draw label line
-void CDataWnd::DrawLabelLine(RectF labelRectF, Color labCol, 
+void CDataWnd::DrawLabelLine(RectF labelRectF, Color labCol,
                       DashStyle dashStyle, float penWidth, Graphics* grPtr)
 {
 // Get the line start and end
@@ -355,7 +385,7 @@ void CDataWnd::DrawLabelLine(RectF labelRectF, Color labCol,
 
       pntF.X += CHART_DTPNTSZ + 1.0f;
     }
-    grPtr->DrawPath(&linePen, &grPath);  
+    grPtr->DrawPath(&linePen, &grPath);
   }
 }
 
@@ -363,10 +393,15 @@ void CDataWnd::DrawLabelLine(RectF labelRectF, Color labCol,
 void CDataWnd::DrawLabels(Graphics* grPtr, float offsXF, float offsYF)
 {
   if (m_mapLabs.empty())
-    return; 
+    return;
   ENSURE(!m_strRF.IsEmptyArea());
 
+#ifdef _UNICODE
   FontFamily fontFamily(m_strFontFamilyName.c_str());
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W(m_strFontFamilyName.c_str()));
+#endif
   Gdiplus::Font labelFont(&fontFamily, static_cast<float>(m_fontSize), FontStyleBold);
   grPtr->SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
 

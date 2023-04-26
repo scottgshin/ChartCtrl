@@ -16,9 +16,9 @@ using namespace Gdiplus;
 
 IMPLEMENT_DYNAMIC(CPageCtrl, CButton)
 
-CPageCtrl::CPageCtrl(bool bEnd, bool bRotate, UINT idx) : m_bEnd(bEnd), 
+CPageCtrl::CPageCtrl(bool bEnd, bool bRotate, UINT idx) : m_bEnd(bEnd),
                                                           m_bRotate(bRotate),
-                                                          m_bOnButton(false), 
+                                                          m_bOnButton(false),
                                                           m_idx(idx)
 {
 
@@ -71,7 +71,7 @@ void CPageCtrl::DrawArrow(RectF arrRF, Graphics* grPtr)
   grPtr->DrawLine(&pen, pntStartF, pntEndTopF);
   grPtr->DrawLine(&pen, pntStartF, pntEndBottomF);
   if (m_bEnd)
-    grPtr->DrawLine(&pen, pntStartF.X, pntEndTopF.Y - 1.0f, pntStartF.X, 
+    grPtr->DrawLine(&pen, pntStartF.X, pntEndTopF.Y - 1.0f, pntStartF.X,
                                                         pntEndBottomF.Y + 2.0f);
   if (!matrix.IsIdentity())
     grPtr->ResetTransform();
@@ -87,7 +87,7 @@ END_MESSAGE_MAP()
 
 void CPageCtrl::OnPaint()
 {
-  CPaintDC dc(this); 
+  CPaintDC dc(this);
   Graphics gr(dc);
 
   RectF rGdiF;
@@ -99,18 +99,18 @@ void CPageCtrl::OnPaint()
 
 void CPageCtrl::OnMouseMove(UINT, CPoint)
 {
-	TRACKMOUSEEVENT		csTME;
-  if (!m_bOnButton)
-	{
-  	m_bOnButton = true;
+    TRACKMOUSEEVENT     csTME;
+    if (!m_bOnButton)
+    {
+        m_bOnButton = true;
 
-    csTME.cbSize = sizeof(csTME);
-		csTME.dwFlags = TME_LEAVE;
-		csTME.hwndTrack = m_hWnd;
-		TrackMouseEvent(&csTME);
+        csTME.cbSize = sizeof(csTME);
+        csTME.dwFlags = TME_LEAVE;
+        csTME.hwndTrack = m_hWnd;
+        TrackMouseEvent(&csTME);
 
-    RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE);
-	} 
+        RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_NOERASE);
+    }
 } // End of OnMouseMove
 
 LRESULT CPageCtrl::OnMouseLeave(WPARAM, LPARAM)
@@ -129,13 +129,13 @@ LRESULT CPageCtrl::OnMouseLeave(WPARAM, LPARAM)
 IMPLEMENT_DYNAMIC(CChartDataView, CWnd)
 
 CChartDataView::CChartDataView() : m_chartIdx(-1), m_precision(3), m_precisionY(3),
-                                   m_pXLabelStrFn(NULL), m_pYLabelStrFn(NULL), 
-                                   m_bkColor((ARGB)Color::White), m_selColor(Color(0x40, 0xFF, 0xFF, 0x00)), 
+                                   m_pXLabelStrFn(NULL), m_pYLabelStrFn(NULL),
+                                   m_bkColor((ARGB)Color::White), m_selColor(Color(0x40, 0xFF, 0xFF, 0x00)),
                                    m_textColor((ARGB)Color::Black),
                                    m_fontName(_T("Verdana")), m_fontHeight(8.0f),
-                                   m_headerFontHeight(10.0f), 
+                                   m_headerFontHeight(10.0f),
                                    m_offsX(0.0f), m_offsY(0.0f), m_deltaX(0.0f), m_deltaY(0.0f),
-                                   m_page(3), m_cols(3), m_rows(1), m_currPageID(0), 
+                                   m_page(3), m_cols(3), m_rows(1), m_currPageID(0),
                                    m_nPages(1), m_dpiRatio(1.0f)
 
 {
@@ -156,7 +156,7 @@ void CChartDataView::InitParams(const CChart* chartPtr, bool bClearMap, const CC
   tmpStr          = chartPtr->GetAxisYName();
   m_labelY        = tmpStr.empty() ? string_t(_T("Y")) : tmpStr;
   m_pXLabelStrFn  = pHost->GetLabXValStrFnPtr();
-  m_pYLabelStrFn  = chartPtr->GetLabYValStrFnPtr(); 
+  m_pYLabelStrFn  = chartPtr->GetLabYValStrFnPtr();
   m_vDataPnts     = chartPtr->m_vDataPnts;
 
   m_vStrX.resize(m_vDataPnts.size());
@@ -248,7 +248,7 @@ bool CChartDataView::UpdateParams(const CChart* chartPtr, int flagsData) // TODO
       flags |= F_VALX;
     }
 
-    val_label_str_fn pYLabelStrFn = chartPtr->GetLabYValStrFnPtr(); 
+    val_label_str_fn pYLabelStrFn = chartPtr->GetLabYValStrFnPtr();
     if (m_pYLabelStrFn != pYLabelStrFn)   // Entire Y-column should be changed
     {
       m_pYLabelStrFn = pYLabelStrFn;
@@ -260,7 +260,7 @@ bool CChartDataView::UpdateParams(const CChart* chartPtr, int flagsData) // TODO
       size_t endOffs = 0;
       switch (flagsData)
       {
-      case F_APPEND:  
+      case F_APPEND:
         endOffs = OnChartAppended(chartPtr->m_vDataPnts);
         if (!(flags & (F_VALX|F_VALY|F_DSIZE)))
         {
@@ -285,15 +285,15 @@ bool CChartDataView::UpdateParams(const CChart* chartPtr, int flagsData) // TODO
     }
     else
     {
-      if (flags & F_VALX) 
+      if (flags & F_VALX)
       {
-        transform(m_vDataPnts.begin() + dataOffset, m_vDataPnts.end(), 
+        transform(m_vDataPnts.begin() + dataOffset, m_vDataPnts.end(),
               m_vStrX.begin() + dataOffset, nmb_to_string<double, false>(m_precision, m_pXLabelStrFn));
       }
 
       if (flags & F_VALY)
       {
-        transform(m_vDataPnts.begin() + dataOffset, m_vDataPnts.end(), 
+        transform(m_vDataPnts.begin() + dataOffset, m_vDataPnts.end(),
               m_vStrY.begin() + dataOffset, nmb_to_string<double, true>(m_precisionY, m_pYLabelStrFn));
       }
     }
@@ -309,7 +309,7 @@ bool CChartDataView::UpdateParams(const CChart* chartPtr, int flagsData) // TODO
       CalcLayout(flags, dataOffset);
 
     if (flagsData != F_NODATACHANGE)
-    { 
+    {
       if (flagsData & F_TRUNCATE)
       {
         if (m_nPages <= m_currPageID)
@@ -318,10 +318,10 @@ bool CChartDataView::UpdateParams(const CChart* chartPtr, int flagsData) // TODO
       else if ((flagsData & F_APPEND) == 0)
         m_currPageID = 0;
     }
-    else 
+    else
       m_currPageID = 0;
-     
- 
+
+
     bool bEnableLeft = m_currPageID == 0 ? false : true;
     bool bEnableRight = (m_currPageID == (m_nPages - 1)) ? false : true;
 
@@ -341,7 +341,7 @@ bool CChartDataView::UpdateParams(const CChart* chartPtr, int flagsData) // TODO
 size_t CChartDataView::OnChartAppended(const V_CHARTDATAD& vChartData)
 {
   size_t oldDataSize = m_vDataPnts.size();     // Change in chart's data vector
-  size_t newDataSize = vChartData.size(); 
+  size_t newDataSize = vChartData.size();
   size_t dataOffset = newDataSize;
   if (newDataSize > oldDataSize)
   {
@@ -357,10 +357,10 @@ size_t CChartDataView::OnChartAppended(const V_CHARTDATAD& vChartData)
     itStart += dataOffset;
     itSource += dataOffset;
 
-    copy(itStart, itEnd, itSource); 
-    transform(m_vDataPnts.begin() + dataOffset, m_vDataPnts.end(), 
+    copy(itStart, itEnd, itSource);
+    transform(m_vDataPnts.begin() + dataOffset, m_vDataPnts.end(),
           m_vStrX.begin() + dataOffset, nmb_to_string<double, false>(m_precision, m_pXLabelStrFn));
-    transform(m_vDataPnts.begin() + dataOffset, m_vDataPnts.end(), 
+    transform(m_vDataPnts.begin() + dataOffset, m_vDataPnts.end(),
           m_vStrY.begin() + dataOffset, nmb_to_string<double, true>(m_precisionY, m_pYLabelStrFn));
   }
   return dataOffset;
@@ -400,11 +400,11 @@ size_t CChartDataView::OnChartDataReplaced(const V_CHARTDATAD& vChartData, bool 
   size_t dataSize = vChartData.size();
   m_vDataPnts.assign(vChartData.cbegin(), vChartData.cend());
   m_vDataPnts.shrink_to_fit();
-  m_vStrX.resize(dataSize);  
-  transform(m_vDataPnts.begin(), m_vDataPnts.end(), 
+  m_vStrX.resize(dataSize);
+  transform(m_vDataPnts.begin(), m_vDataPnts.end(),
           m_vStrX.begin(), nmb_to_string<double, false>(m_precision, m_pXLabelStrFn));
   m_vStrY.resize(dataSize);
-  transform(m_vDataPnts.begin(), m_vDataPnts.end(), 
+  transform(m_vDataPnts.begin(), m_vDataPnts.end(),
           m_vStrY.begin(), nmb_to_string<double, true>(m_precisionY, m_pYLabelStrFn));
   if (!bHasCellsMap)
     RefreshSelCells();
@@ -497,8 +497,8 @@ void CChartDataView::CalcLayout(void)
 {
   CDC* pDC = GetDC();
   Graphics gr(pDC->m_hDC);
-  
-  gr.SetPageUnit(UnitDocument);  // 300 dpi/inch   
+
+  gr.SetPageUnit(UnitDocument);  // 300 dpi/inch
   gr.SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
 
   RectF rGdiF;
@@ -513,7 +513,12 @@ void CChartDataView::CalcLayout(void)
   rGdiF.Width -= m_dpiRatio*4.0f;
   rGdiF.Height -= m_dpiRatio;
 
+#ifdef _UNICODE
   FontFamily fontFamily(m_fontName.c_str());
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W(m_fontName.c_str()));
+#endif
   Gdiplus::Font headerFont(&fontFamily, m_headerFontHeight, FontStyleBold, UnitPoint);
   float headerHeight = 1.5f*headerFont.GetHeight(&gr);
   Gdiplus::Font textFont(&fontFamily, m_fontHeight, FontStyleBold, UnitPoint);
@@ -538,7 +543,11 @@ void CChartDataView::CalcLayout(void)
   stream << m_vDataPnts.size() << _T("99\n");
   string_t strNmb;
   getline(stream, strNmb);
+#ifdef _UNICODE
   gr.MeasureString(strNmb.c_str(), -1, &textFont, rGdiF, &strFormat, &nmbRF);
+#else if _MBCS
+  gr.MeasureString(CA2W(strNmb.c_str()), -1, &textFont, rGdiF, &strFormat, &nmbRF);
+#endif
 
 
   m_vStrX.push_back(m_labelX);                // Temporary
@@ -555,7 +564,7 @@ void CChartDataView::CalcLayout(void)
   float widthColY = maxYRF.Width + m_dpiRatio*DATA_ENDOFFS;
 
   float rowWidth = nmbRF.Width +  widthColX + widthColY;
-  
+
   float colNmb;
   float colSpaceX = rowWidth*modf(rGdiF.Width/(rowWidth + DR_SPACE), &colNmb)/(colNmb+ 1);
   if ((colSpaceX < m_dpiRatio*DATA_ENDOFFS) && (colNmb > 1))
@@ -588,8 +597,8 @@ void CChartDataView::CalcLayout(int flags, size_t dataItOffs)
 {
   CDC* pDC = GetDC();
   Graphics gr(pDC->m_hDC);
-  
-  gr.SetPageUnit(UnitDocument);  // 300 dpi/inch   
+
+  gr.SetPageUnit(UnitDocument);  // 300 dpi/inch
   gr.SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
 
   RectF rGdiF;
@@ -604,7 +613,12 @@ void CChartDataView::CalcLayout(int flags, size_t dataItOffs)
   rGdiF.Width -= m_dpiRatio*4.0f;
   rGdiF.Height -= m_dpiRatio;
 
+#ifdef _UNICODE
   FontFamily fontFamily(m_fontName.c_str());
+#else if _MBCS
+  USES_CONVERSION;
+  FontFamily fontFamily(CA2W(m_fontName.c_str()));
+#endif
   Gdiplus::Font headerFont(&fontFamily, m_headerFontHeight, FontStyleBold, UnitPoint);
   float headerHeight = 1.5f*headerFont.GetHeight(&gr);
   Gdiplus::Font textFont(&fontFamily, m_fontHeight, FontStyleBold, UnitPoint);
@@ -633,20 +647,36 @@ void CChartDataView::CalcLayout(int flags, size_t dataItOffs)
     stream << m_vDataPnts.size() << _T("99\n");
     string_t strNmb;
     getline(stream, strNmb);
+#ifdef _UNICODE
     gr.MeasureString(strNmb.c_str(), -1, &textFont, rGdiF, &strFormat, &nmbRF);
+#else if _MBCS
+    gr.MeasureString(CA2W(strNmb.c_str()), -1, &textFont, rGdiF, &strFormat, &nmbRF);
+#endif
   }
 
   if ((flags & F_NAMEX) && !(flags & F_VALX))
+  {
+#ifdef _UNICODE
     gr.MeasureString(m_labelX.c_str(), -1, &textFont, rGdiF, &strFormat, &maxXRF);
+#else if _MBCS
+    gr.MeasureString(CA2W(m_labelX.c_str()), -1, &textFont, rGdiF, &strFormat, &maxXRF);
+#endif
+  }
   if ((flags & F_NAMEY) && !(flags & F_VALY))
+  {
+#ifdef _UNICODE
     gr.MeasureString(m_labelY.c_str(), -1, &textFont, rGdiF, &strFormat, &maxYRF);
+#else if _MBCS
+    gr.MeasureString(CA2W(m_labelY.c_str()), -1, &textFont, rGdiF, &strFormat, &maxYRF);
+#endif
+  }
 
   if (flags & F_VALX)
   {
     m_vStrX.push_back(m_labelX);                // Temporary
     maxXRF =
       for_each(m_vStrX.begin() + dataItOffs, m_vStrX.end(), get_max_str<string_t, -1>(&textFont, &gr))._maxRF;
-    m_vStrX.pop_back();  // Have it removed 
+    m_vStrX.pop_back();  // Have it removed
   }
 
   if (flags & F_VALY)
@@ -673,7 +703,7 @@ void CChartDataView::CalcLayout(int flags, size_t dataItOffs)
       --colNmb;
       colSpaceX = (rGdiF.Width - rowWidth*colNmb)/(colNmb + 1);
     }
-    
+
     float nmbRows = floor(rGdiF.Height/textStep) - 2;   // Account for the table header
 
     m_rowRF = RectF(0.0f, 0.0f, rowWidth, textStep);
@@ -707,7 +737,7 @@ void CChartDataView::CreateChildren(void)
 
   if (!IsWindow(m_leftEnd.m_hWnd)) // All were deleted
   {
-    m_btnPrint.Create(_T("Print"), 
+    m_btnPrint.Create(_T("Print"),
                       WS_CHILD|WS_VISIBLE|BS_PUSHBUTTON|BS_TEXT|BS_FLAT,
                       ctrlRect,
                       this,
@@ -748,7 +778,7 @@ void CChartDataView::CreateChildren(void)
 
     ctrlRect.OffsetRect(96, 0);
     ctrlRect.right = ctrlRect.left + 96;
-    m_btnClose.Create(_T("Close"), 
+    m_btnClose.Create(_T("Close"),
                       WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON|BS_TEXT|BS_FLAT,
                       ctrlRect,
                       this,
@@ -773,7 +803,7 @@ string_t CChartDataView::GetDataValStr(double val, int precision)
 
   stream << _T(" ") << setprecision(precision) << val << _T("\n");
 
-  getline(stream, strRes); 
+  getline(stream, strRes);
   return strRes;
 }
 
@@ -813,7 +843,7 @@ size_t CChartDataView::DataItemFromMousePnt(CPoint pnt, PointD& dataPntD, RectF&
         for (size_t colCnt = 0; colCnt < colID; ++ colCnt)
           dataID += m_vRows[colCnt];
         dataID += rowID;
- 
+
         if (dataID < m_vDataPnts.size())
         {
           dataPntD = m_vDataPnts[dataID];
@@ -853,7 +883,7 @@ string_t CChartDataView::GetTableHeader(void)
 {
   sstream_t stream;
   stream << m_label <<  _T(" (") << m_vDataPnts.size() << _T(" Points")
-         << _T(")      \n"); 
+         << _T(")      \n");
   string_t headerStr;
   getline(stream, headerStr);
 
@@ -900,7 +930,12 @@ void CChartDataView::ShowWaitMessage(int chartIdx, size_t newSize)
     CDC* pDC = GetDC();
     Graphics gr(pDC->m_hDC);
 
+#ifdef _UNICODE
     FontFamily fontFamily(_T("Verdana"));
+#else if _MBCS
+    USES_CONVERSION;
+    FontFamily fontFamily(CA2W("Verdana"));
+#endif
     Gdiplus::Font headerFont(&fontFamily, 16, FontStyleBold, UnitPoint);
     StringFormat strFormat;
     strFormat.SetAlignment(StringAlignmentCenter);
@@ -910,13 +945,22 @@ void CChartDataView::ShowWaitMessage(int chartIdx, size_t newSize)
     SolidBrush bkBr((ARGB)Color::White);
     gr.FillRectangle(&bkBr, boundingRect);
     SolidBrush br((ARGB)Color::Red);
+#ifdef _UNICODE
     gr.DrawString(_T("Calculating Layout"), -1, &headerFont, boundingRect, &strFormat, &br);
+#else if _MBCS
+    gr.DrawString(CA2W("Calculating Layout"), -1, &headerFont, boundingRect, &strFormat, &br);
+#endif
   }
 }
 
 void CChartDataView::DrawPageHeader(float offsetX, Graphics* grPtr, size_t pageNmb, float dpiRatio)
 {
+#ifdef _UNICODE
   FontFamily fontFamily(m_fontName.c_str());
+#else if _MBCS
+  USES_CONVERSION;
+    FontFamily fontFamily(CA2W(m_fontName.c_str()));
+#endif
   Gdiplus::Font headerFont(&fontFamily, m_headerFontHeight*dpiRatio, FontStyleBold, UnitPoint);
   StringFormat strFormat;
   strFormat.SetAlignment(StringAlignmentFar);
@@ -924,16 +968,29 @@ void CChartDataView::DrawPageHeader(float offsetX, Graphics* grPtr, size_t pageN
   SolidBrush txtBr(m_textColor);
   RectF headerRF = m_headerRF;
   headerRF.Offset(offsetX, 0.0f);
+#ifdef _UNICODE
   grPtr->DrawString(m_header.c_str(), -1, &headerFont,  headerRF, &strFormat, &txtBr);
+#else if _MBCS
+  grPtr->DrawString(CA2W(m_header.c_str()), -1, &headerFont,  headerRF, &strFormat, &txtBr);
+#endif
   sstream_t stream;
   stream << _T("Page ") << pageNmb << _T(" of ") << m_nPages;
   strFormat.SetAlignment(StringAlignmentNear);
+#ifdef _UNICODE
   grPtr->DrawString(stream.str().c_str(), -1, &headerFont, headerRF, &strFormat, &txtBr);
+#else if _MBCS
+  grPtr->DrawString(CA2W(stream.str().c_str()), -1, &headerFont,  headerRF, &strFormat, &txtBr);
+#endif
 }
 
 float CChartDataView::DrawTableHeader(float offsetX, float offsetY, Graphics* grPtr, float dpiRatio)
 {
+#ifdef _UNICODE
   FontFamily fontFamily(m_fontName.c_str());
+#else if _MBCS
+  USES_CONVERSION;
+    FontFamily fontFamily(CA2W(m_fontName.c_str()));
+#endif
   Gdiplus::Font txtFont(&fontFamily, m_fontHeight*dpiRatio, FontStyleBold, UnitPoint);
   StringFormat strFormat;
   strFormat.SetAlignment(StringAlignmentFar);
@@ -958,20 +1015,28 @@ float CChartDataView::DrawTableHeader(float offsetX, float offsetY, Graphics* gr
     grPtr->DrawRectangle(&cellPen, dataXRF);
     RectF textRF(dataXRF);
     textRF.Width -= m_dpiRatio*DATA_ENDOFFS;
+#ifdef _UNICODE
     grPtr->DrawString(m_labelX.c_str(), -1, &txtFont, textRF, &strFormat, &cellBr);
+#else if _MBCS
+    grPtr->DrawString(CA2W(m_labelX.c_str()), -1, &txtFont, textRF, &strFormat, &cellBr);
+#endif
     dataXRF.Offset(deltaX, 0.0f);
 
     grPtr->DrawRectangle(&cellPen, dataYRF);
     textRF = dataYRF;
     textRF.Width -= m_dpiRatio*DATA_ENDOFFS;
+#ifdef _UNICODE
     grPtr->DrawString(m_labelY.c_str(), -1, &txtFont, textRF, &strFormat, &cellBr);
+#else if _MBCS
+    grPtr->DrawString(CA2W(m_labelY.c_str()), -1, &txtFont, textRF, &strFormat, &cellBr);
+#endif
     dataYRF.Offset(deltaX, 0.0f);
   }
 
-  return nmbRF.Height;    
+  return nmbRF.Height;
 }
 
-size_t CChartDataView::DrawDataPage(size_t dataStartID, float tableOffsX, float tableOffsY, 
+size_t CChartDataView::DrawDataPage(size_t dataStartID, float tableOffsX, float tableOffsY,
                                                                       Graphics* grPtr, float dpiRatio)
 {
   RectF nmbRF = m_nmbRF;
@@ -986,7 +1051,12 @@ size_t CChartDataView::DrawDataPage(size_t dataStartID, float tableOffsX, float 
   RectF topDataYRF = dataYRF;
   RectF topDataXRF = dataXRF;
 
+#ifdef _UNICODE
   FontFamily fontFamily(m_fontName.c_str());
+#else if _MBCS
+  USES_CONVERSION;
+    FontFamily fontFamily(CA2W(m_fontName.c_str()));
+#endif
   Gdiplus::Font txtFont(&fontFamily, dpiRatio*m_fontHeight, FontStyleBold, UnitPoint);
   StringFormat strFormat;
   strFormat.SetAlignment(StringAlignmentFar);
@@ -995,7 +1065,7 @@ size_t CChartDataView::DrawDataPage(size_t dataStartID, float tableOffsX, float 
   SolidBrush cellBr(m_textColor);
   Pen cellPen(m_textColor, 1.0f*m_dpiRatio);
 
-  size_t rowsToDraw = m_vDataPnts.size() - dataStartID;  
+  size_t rowsToDraw = m_vDataPnts.size() - dataStartID;
   if (rowsToDraw > m_page)
     m_vRows.assign(m_cols, m_rows);
   else
@@ -1029,21 +1099,33 @@ size_t CChartDataView::DrawDataPage(size_t dataStartID, float tableOffsX, float 
       grPtr->DrawRectangle(&cellPen, nmbRF);
       RectF txtRF = nmbRF;
       txtRF.Width -= txtEndOffsX;
+#ifdef _UNICODE
       grPtr->DrawString(nmbStr.c_str(), -1, &txtFont, txtRF, &strFormat, &cellBr);
+#else if _MBCS
+      grPtr->DrawString(CA2W(nmbStr.c_str()), -1, &txtFont, txtRF, &strFormat, &cellBr);
+#endif
       nmbRF.Offset(0.0, m_deltaY);
 
-      string_t valXStr = m_vStrX[rowID]; 
+      string_t valXStr = m_vStrX[rowID];
       grPtr->DrawRectangle(&cellPen, dataXRF);
       txtRF = dataXRF;
       txtRF.Width -= txtEndOffsX;
+#ifdef _UNICODE
       grPtr->DrawString(valXStr.c_str(), -1, &txtFont, txtRF,  &strFormat, &cellBr);
+#else if _MBCS
+      grPtr->DrawString(CA2W(valXStr.c_str()), -1, &txtFont, txtRF,  &strFormat, &cellBr);
+#endif
       dataXRF.Offset(0.0f, m_deltaY);
 
-      string_t valYStr = m_vStrY[rowID]; 
+      string_t valYStr = m_vStrY[rowID];
       grPtr->DrawRectangle(&cellPen, dataYRF);
       txtRF = dataYRF;
       txtRF.Width -= txtEndOffsX;
+#ifdef _UNICODE
       grPtr->DrawString(valYStr.c_str(), -1, &txtFont, txtRF,  &strFormat, &cellBr);
+#else if _MBCS
+      grPtr->DrawString(CA2W(valYStr.c_str()), -1, &txtFont, txtRF,  &strFormat, &cellBr);
+#endif
       dataYRF.Offset(0.0f, m_deltaY);
       ++rowID;
     }
@@ -1074,8 +1156,7 @@ void CChartDataView::DrawSelCells(Graphics* grPtr)
       PointD dataPntD = it->second;
       if (RowRectFromDataID(dataID, dataCellRF))
         grPtr->FillRectangle(&bkBr, dataCellRF);
-    }  
-
+    }
   }
 }
 
@@ -1090,7 +1171,7 @@ size_t CChartDataView::PrintData(size_t nPage, Gdiplus::Graphics* grPtr)
   rGdiF.Offset(75.0f, 0.0f);
 
   float prnWidth = (m_cols -1)*m_deltaX + m_rowRF.Width;
-  float prnHeight = (m_rows + 1)*m_deltaY ;//+ m_offsY; //(m_rowRF.Y - m_headerRF.Y); 
+  float prnHeight = (m_rows + 1)*m_deltaY ;//+ m_offsY; //(m_rowRF.Y - m_headerRF.Y);
 
   float offsX = rGdiF.X + (rGdiF.Width - prnWidth)/2.0f;
   float offsY = rGdiF.Y + (rGdiF.Height - prnHeight)/2.0f;
@@ -1126,10 +1207,10 @@ END_MESSAGE_MAP()
 
 void CChartDataView::OnPaint()
 {
-  CPaintDC dc(this); 
+  CPaintDC dc(this);
   Graphics gr(dc);
 
-  gr.SetPageUnit(UnitDocument);  // 300 dpi/inch   
+  gr.SetPageUnit(UnitDocument);  // 300 dpi/inch
 
   Rect rGdi;
   gr.GetVisibleClipBounds(&rGdi);
@@ -1198,7 +1279,7 @@ void CChartDataView::OnRButtonDown(UINT nFlags, CPoint point)
 {
   if (!m_mapSelCells.empty())
   {
-    if (IDYES == 
+    if (IDYES ==
       AfxMessageBox(_T("Are you going to deselect all selected cells?(YES/NO"),
                                                         MB_ICONQUESTION|MB_YESNO))
     {
@@ -1213,7 +1294,7 @@ void CChartDataView::OnRButtonDown(UINT nFlags, CPoint point)
 
   CWnd::OnRButtonDown(nFlags, point);
 }
- 
+
 void CChartDataView::OnBnClickedFirstPage(void)
 {
   ChangeDataPage(INT_MIN);
@@ -1260,9 +1341,9 @@ void CChartDataView::OnBnClickedPrint(void)
   if (printDC != NULL)
   {
     CDC* pDC = new CDC;
-    pDC->Attach(printDC); 
+    pDC->Attach(printDC);
     Graphics* grPtr = new Graphics(printDC);
-    grPtr->SetPageUnit(UnitDocument);  // 300 dpi/inch   
+    grPtr->SetPageUnit(UnitDocument);  // 300 dpi/inch
     grPtr->SetSmoothingMode(SmoothingModeAntiAlias);
     grPtr->SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
 

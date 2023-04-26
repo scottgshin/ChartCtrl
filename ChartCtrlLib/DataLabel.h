@@ -30,15 +30,15 @@ using namespace Gdiplus;
 
 class CDataWnd : public CWnd
 {
-	DECLARE_DYNAMIC(CDataWnd)
+    DECLARE_DYNAMIC(CDataWnd)
 
 public:
-	CDataWnd();
+    CDataWnd();
   CDataWnd(Color bkCol, Color borderCol);
-	virtual ~CDataWnd();
+    virtual ~CDataWnd();
 
 protected:
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 public:
   afx_msg void OnPaint();
 public:
@@ -70,11 +70,11 @@ protected:
   CRect CalcNameWndRect(CRect labStrRect, CWnd* pParent);
   CRect CalcDataWndRect(CRect& labStrRect, CWnd* pParent, CPoint origPnt);
 
-  float DrawLabel(const TUPLE_LABEL& tupleLabel, RectF labRect, Gdiplus::Font* pFont, 
+  float DrawLabel(const TUPLE_LABEL& tupleLabel, RectF labRect, Gdiplus::Font* pFont,
                                             Graphics* grPtr);
   void DrawLabels(Graphics* grPtr, float offsXF = 0.0f, float offsYF = 0.0f);
 
-  void CDataWnd::DrawLabelLine(RectF labelRectF, Color labCol, 
+  void CDataWnd::DrawLabelLine(RectF labelRectF, Color labCol,
                             DashStyle dashStyle, float penWidth, Graphics* grPtr);
 
 public:
@@ -85,7 +85,7 @@ public:
 
 // Data members
 public:
-  MAP_LABSTR m_mapLabs; 
+  MAP_LABSTR m_mapLabs;
 
 protected:
   bool m_bData;
