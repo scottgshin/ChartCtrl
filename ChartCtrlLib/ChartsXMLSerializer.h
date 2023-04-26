@@ -8,7 +8,7 @@
 #pragma once;
 
 
-#import <msxml6.dll> raw_interfaces_only
+#import <msxml6.dll> raw_interfaces_only exclude( "ISequentialStream", "_FILETIME" )
 
 template<typename T>
 inline void get_attrValue(_bstr_t attrName, MSXML2::IXMLDOMNamedNodeMap *pAttrMap, T& val)

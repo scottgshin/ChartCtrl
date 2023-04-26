@@ -6,17 +6,15 @@
 
 #pragma once
 
-//#include <tchar.h>
-#include <vector>
-#include <deque>
 #include <map>
-#include <string>
 #include <sstream>
 #include <iomanip>
-#include <algorithm>
-#include <tuple>
 #include <random>
-#include "gdiplus.h"
+// Disable GDI+ warnings like gdiplusheaders.h(695): warning C4458: declaration of 'nativeCap' hides class member
+#pragma warning( push )
+#pragma warning( disable : 4458 )
+#include <gdiplus.h>
+#pragma warning( pop )
 
 /////////////////////////////////////////////////////////////////////////////
 //
