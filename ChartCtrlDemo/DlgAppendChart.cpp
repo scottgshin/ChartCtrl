@@ -527,9 +527,11 @@ void CDlgAppendCharts::OnBnClickedSave()
 
 void CDlgAppendCharts::OnTimer(UINT_PTR nIDEvent)
 {
+  CChartCtrlDemoDlg* pOwner = nullptr;
+  
   if (nIDEvent == 1)
   {
-    CChartCtrlDemoDlg* pOwner = static_cast<CChartCtrlDemoDlg*>(GetOwner());
+    pOwner = static_cast<CChartCtrlDemoDlg*>(GetOwner());
     CChartContainer* pContainer = &(pOwner->m_chartContainer);
    if ( m_extX.second < (m_animEndX + m_appendDelta))
     {
@@ -541,7 +543,7 @@ void CDlgAppendCharts::OnTimer(UINT_PTR nIDEvent)
     else
     {
       KillTimer(1);
-      CChartCtrlDemoDlg* pOwner = static_cast<CChartCtrlDemoDlg*>(GetOwner());
+      pOwner = static_cast<CChartCtrlDemoDlg*>(GetOwner());
       pOwner->m_chartContainer.SetFocus();
     }
   }

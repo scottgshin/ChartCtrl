@@ -52,6 +52,7 @@ protected:
   CMFCColorButton m_colBtnPenCol;
   CListBox m_lbDash;
   CListBox m_lbFunc;
+  CListBox m_lbPoint;
   SliderGdi::CSliderGdiCtrlT<float> m_slPenWidth;
   SliderGdi::CSliderGdiCtrlT<double> m_slMinX;
   SliderGdi::CSliderGdiCtrlT<double> m_slMaxX;
@@ -80,7 +81,8 @@ protected:
 
 // List boxes
   int m_dashStyle;    // Actually it is Gdiplus::DashStyle
-  int m_func;         // 0 - sin, 1 sin(x)/x, 2 - exp, 3 - rect, 4 - random
+  int m_func;         // 0 - sin, 1 sin(x)/x, 2 - exp, 3 - rect, 4 - random, 5 - x = y^2.5
+  int m_pointStyle;   // Actually it is a Gdiplus::PointStyle
 
   double m_multY;
   CString m_strMultY;

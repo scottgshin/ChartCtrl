@@ -18,7 +18,7 @@ CDlgAddChart::CDlgAddChart(CWnd* pParent /*=NULL*/)
     m_strName(_T("")), m_strYValName(_T("Y")), m_defaultYName(_T("Y")), m_precisionY(3),
     m_tension(0), m_fPenWidth(2.0f), m_colChart(Color(255, 157, 59, 45)),
     m_strRGB(_T("RGB(157,59,45)")),
-    m_showPnts(BST_CHECKED), m_dashStyle(0), m_func(0), 
+    m_showPnts(BST_CHECKED), m_dashStyle(0), m_pointStyle(0), m_func(0), 
     m_multY(1.0), 
     m_fChMinX(-10.0), m_fChMaxX(10.0) , m_nPntsNmb(100),
     m_pContainer(NULL)
@@ -41,6 +41,8 @@ void CDlgAddChart::DoDataExchange(CDataExchange* pDX)
   DDX_Text(pDX, IDC_STRGB, m_strRGB);
   DDX_Control(pDX, IDC_LBDASH, m_lbDash);
   DDX_LBIndex(pDX, IDC_LBDASH, m_dashStyle);
+  DDX_Control(pDX, IDC_POINT_STYLE, m_lbPoint);
+  DDX_LBIndex(pDX, IDC_POINT_STYLE, m_pointStyle);
   DDX_Control(pDX, IDC_LBFUNCTION, m_lbFunc);
   DDX_LBIndex(pDX, IDC_LBFUNCTION, m_func);
   DDX_Control(pDX, IDC_SLMULT, m_slMultOrder);
@@ -224,6 +226,24 @@ BOOL CDlgAddChart::OnInitDialog()
   m_lbDash.InsertString(5, _T("Points only"));
   m_lbDash.SetCurSel(m_dashStyle);
 
+  /*
+  enum class PointStyle
+  {
+      Ellipse,
+      Triangle_Up,
+      Square,
+      Diamond,
+      Triangle_Down
+  };
+  */
+
+  m_lbPoint.InsertString(0, _T("Ellipse"));
+  m_lbPoint.InsertString(1, _T("Triangle_Up"));
+  m_lbPoint.InsertString(2, _T("Square"));
+  m_lbPoint.InsertString(3, _T("Diamond"));
+  m_lbPoint.InsertString(4, _T("Triangle_Down"));
+  m_lbPoint.SetCurSel(m_pointStyle);
+
   m_lbFunc.InsertString(0, _T("Sine Wave"));
   m_lbFunc.InsertString(1, _T("sin(x)/x Function"));
   m_lbFunc.InsertString(2, _T("Exponent"));
@@ -336,14 +356,14 @@ void CDlgAddChart::OnBnClickedBtnadd()
                                         DashStyle(m_dashStyle), 
                                         m_fPenWidth, float(m_tension), 
                                         m_colChart, 
-                                        vData, true); 
+                                        vData, static_cast<PointStyle>(m_pointStyle), true);
                                         
   if (chartIdx == -1)
   {
     CString msgStr;
     msgStr.Format(_T("Can't add CChart ID=%d, Name=%s\n") 
                   _T("Check the data vector and/or\nchart name(should be unique)"), 
-                                                               m_chartIdx, m_strName);
+                                                               m_chartIdx, m_strName.c_str());
     AfxMessageBox(msgStr, MB_OK|MB_ICONERROR);
   }
   else
@@ -364,7 +384,7 @@ void CDlgAddChart::OnMultYNotification(NMHDR* , LRESULT*)
 {
   UpdateData();
   int multOrder = m_slMultOrder.GetCurrValue();
-  double m_multY = pow(10.0, multOrder);
+  m_multY = pow(10.0, multOrder);
   m_strMultY.Format(_T("%g"), m_multY);
   UpdateData(FALSE);
 }
