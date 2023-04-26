@@ -108,6 +108,7 @@ inline void DiamondFFromCenterF(const PointF pntCenterF, float fWidth, float fHe
     pntVec.push_back(pnt);
 }
 
+
 inline PointF GetRectFCenterF(const RectF rectF)
 {
     PointF pntF;
@@ -263,7 +264,6 @@ struct time_series_to_pnt
         return pnt;
     }
 };
-
 
 template <typename T>
 struct xy_to_pnt
@@ -531,9 +531,3 @@ inline std::pair<_InIt, _InIt> find_border_pnts(_InIt _First, _InIt _Last, _Pr _
     }
     return pair_res_alg;
 }
-
-
-
-
-
-

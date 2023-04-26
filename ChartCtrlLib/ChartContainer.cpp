@@ -4784,6 +4784,7 @@ void  CChartContainer::DrawAxisLabels(Rect boundXlabel, Rect boundYlabel, HDC hd
     SetBkMode(hdc, OPAQUE);
 }
 
+
 // Printing
 int CChartContainer::GetScreenDpi(void)
 {
