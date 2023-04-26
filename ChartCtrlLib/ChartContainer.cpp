@@ -722,13 +722,13 @@ bool CChartContainer::HasVisiblePntsDInYBand(int chartIdx, double bottomY, doubl
       continue;
 
     double locScY = chartPtr->GetLocScaleY();
-    double topY = pntTopD.Y;
-    double bottomY = pntBottomD.Y;
+    double topY1 = pntTopD.Y;
+    double bottomY1 = pntBottomD.Y;
 // Select visible X-part of the chart
     V_CHARTDATAD::iterator itB, itE;
     std::tie(itB, itE) = chartPtr->GetStartEndDataIterators(chartPtr->m_vDataPnts, m_startX, m_endX);
     itB = find_if(itB, itE,
-      [topY, bottomY, locScY](const PointD& pntD) {return in_range(bottomY, topY, locScY*pntD.Y);});
+      [topY1, bottomY1, locScY](const PointD& pntD) {return in_range(bottomY1, topY1, locScY*pntD.Y);});
     if (itB != itE)
     {
       bHasPntsD = true;
@@ -1039,6 +1039,7 @@ Status CChartContainer::SaveContainerImage(string_t pathName)
 
     fileDlg.m_ofn.lpstrInitialDir = dirStr.c_str();
     fileDlg.m_ofn.lpstrTitle = _T("Save As Image");
+    fileDlg.m_ofn.nFilterIndex = 2;
 
     string_t strTitle(_T("Save "));
 
@@ -3140,7 +3141,7 @@ size_t CChartContainer::PrepareDataLegend(PointD origPntD, double epsX, MAP_LABS
         V_CHARTDATAD::iterator itSel = pair_res.first;
         for (int i = nSel; i > 0; --i)
         {
-          PointD selPntD = *itSel;
+          selPntD = *itSel;
           double selY = selPntD.Y * chartPtr->GetLocScaleY();
           int chartIdx = chartPtr->GetChartIdx();
           mapSelPntsD.insert(MAP_SELPNTSD::value_type(chartIdx, selPntD));

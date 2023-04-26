@@ -6,7 +6,6 @@
 
 #include "StdAfx.h"
 #include "ChartDef.h"
-#include "Gdiplus.h"
 #include "DataLabel.h"
 #include "Chart.h"
 #include "ChartContainer.h"

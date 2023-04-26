@@ -6,6 +6,7 @@
 
 
 #pragma once
+#include <string>
 
 using namespace Gdiplus;
 
@@ -482,8 +483,8 @@ struct get_max_str <string_t, Idx>
 template<class _InIt, class _Pr>
 inline _InIt find_nearest(_InIt _First, _InIt _Last, _Pr _Pred)
 {
-    _DEBUG_RANGE(_First, _Last);
-    _DEBUG_POINTER(_Pred);
+    //_DEBUG_RANGE(_First, _Last);
+    //_DEBUG_POINTER(_Pred);
 
   _InIt _NearestIt = _First; // Find first satisfying _Pred
     for (; _First != _Last; ++_First)
@@ -501,8 +502,8 @@ inline _InIt find_nearest(_InIt _First, _InIt _Last, _Pr _Pred)
 template <class _InIt, class _Pr>
 inline std::pair<_InIt, _InIt> find_border_pnts(_InIt _First, _InIt _Last, _Pr _Pred)
 {
-    _DEBUG_RANGE(_First, _Last);
-    _DEBUG_POINTER(_Pred);
+    //_DEBUG_RANGE(_First, _Last);
+    //_DEBUG_POINTER(_Pred);
 
   std::pair<_InIt, _InIt> pair_res_alg = make_pair(_First, _Last);
   for (; _First != _Last; ++_First )

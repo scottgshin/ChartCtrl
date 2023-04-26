@@ -366,7 +366,7 @@ void CDataWnd::DrawLabelLine(RectF labelRectF, Color labCol,
   Pen linePen(labCol, dashStyle != DashStyleCustom ? penWidth : 1.0f);
   if (dashStyle != DashStyleCustom)
   {
-    Pen linePen(labCol, penWidth);
+    //Pen linePen(labCol, penWidth);
     linePen.SetDashStyle(dashStyle);
     grPtr->DrawLine(&linePen, stX, stY, endX, endY);
   }
