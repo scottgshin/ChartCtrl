@@ -1,0 +1,36 @@
+Change History
+
+This project is originally from geoyar in Code Project and has been heavily modified to add new functionality.
+https://www.codeproject.com/articles/317712/an-mfc-chart-control-with-enhanced-user-interface
+
+Look into making the application DPI aware (https://mariusbancila.ro/blog/2021/05/19/how-to-build-high-dpi-aware-native-desktop-applications/) - Seems like a lot of work is involved.
+This could be the solution to adding the axis labels to the window by fixing the blurring when scaled down.
+
+
+20230216
+Version 1.2.23023.0
+1.) Allow curve names of total length of 40 instead of 18 before truncating.
+
+
+
+20221003
+Version 2.10 (1.2.22069.0)
+1.) Bug Fix: If points are too close then no points will show on the graph. Now all non affending points will show.
+
+20220201
+Version 1.2.22031.10
+1.) Updated to Visual Studio 2022
+2.) New Fuctionality Added
+   a.) Point styles
+   b.) Logarithmic scales
+   c.) Support for Multi Byte Character Set (MBCS)
+   d.) Ability to move the Legend to the other corners
+4.) General Improvements/ Mods
+   a.) Initialized class variables using default member initialization
+   b.) Changed the default distance between points for showing their style to 1 instead of 6 (CHART_PNTSTRSH)
+   c.) ChartContainer: std::pair<double, double> UpdateScales(/*const*/ RectF& drawRectF, ...)
+   d.) Default to JPEG instead BMP in CChartContainer::SaveContainerImage(...)
+   e.) Remove Data stamp from CChartContainer::PrintPageHeader(...)
+3.) Bug Fixes
+   a.) Util.h: template <typename T, bool bY> struct greater_or_equal operator() now returns the comparison.
+4.) Updated Version info to use verbuild.exe and set the current version to 1.2.x.x

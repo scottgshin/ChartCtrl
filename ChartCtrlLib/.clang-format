@@ -1,0 +1,55 @@
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+AccessModifierOffset: -4
+AlignConsecutiveAssignments: false
+AlignTrailingComments: true
+AllowShortBlocksOnASingleLine: true
+#AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: true
+AlwaysBreakTemplateDeclarations: true
+#AlwaysBreakTemplateDeclarations: Yes
+
+
+
+
+BreakBeforeBraces: Allman
+BreakConstructorInitializers: AfterColon
+BreakConstructorInitializersBeforeComma: true
+BreakInheritanceList: AfterColon
+BraceWrapping:
+    AfterStruct: true
+    AfterCaseLabel: true
+    AfterClass: false
+    AfterControlStatement: Always
+    AfterEnum: true
+    AfterFunction: true
+    AfterNamespace: true
+    AfterUnion: true
+    AfterExternBlock: true
+    BeforeCatch: true
+    BeforeElse: true
+    #BeforeWhile: true
+    SplitEmptyFunction: true
+    SplitEmptyRecord: true
+    SplitEmptyNamespace: true
+    
+ColumnLimit: 100
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+Cpp11BracedListStyle: true
+DerivePointerAlignment: false
+IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
+IndentWidth: 4
+Language: Cpp
+NamespaceIndentation: Inner
+PointerAlignment: Left
+#PointerAlignment: Middle
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: ControlStatements
+SpacesInConditionalStatement: false
+Standard: Latest
+UseTab: Never

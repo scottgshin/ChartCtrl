@@ -19,7 +19,7 @@
 //
 //#include <afxdisp.h>        // MFC Automation classes
 
-
+// ChartCtrlLib
 #undef _VARIADIC_MAX
 #define _VARIADIC_MAX 10
 
