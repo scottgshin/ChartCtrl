@@ -1,27 +1,38 @@
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChartCtrlLib", "ChartCtrlLib\ChartCtrlLib.vcxproj", "{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}"
-EndProject
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32210.238
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChartCtrlDemo", "ChartCtrlDemo\ChartCtrlDemo.vcxproj", "{98A41E5F-1688-4AAB-8F17-A7C64725F242}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DB2B29BD-18C6-412F-ABC6-98989E4EDBDE} = {DB2B29BD-18C6-412F-ABC6-98989E4EDBDE}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChartCtrlLib_Unicode", "ChartCtrlLib\ChartCtrlLib_Unicode.vcxproj", "{DB2B29BD-18C6-412F-ABC6-98989E4EDBDE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		ChartCtrlLibS|Win32 = ChartCtrlLibS|Win32
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Debug|Win32.Build.0 = Debug|Win32
-		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Release|Win32.ActiveCfg = Release|Win32
-		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Release|Win32.Build.0 = Release|Win32
+		{98A41E5F-1688-4AAB-8F17-A7C64725F242}.ChartCtrlLibS|Win32.ActiveCfg = ChartCtrlLibS|Win32
+		{98A41E5F-1688-4AAB-8F17-A7C64725F242}.ChartCtrlLibS|Win32.Build.0 = ChartCtrlLibS|Win32
 		{98A41E5F-1688-4AAB-8F17-A7C64725F242}.Debug|Win32.ActiveCfg = Debug|Win32
 		{98A41E5F-1688-4AAB-8F17-A7C64725F242}.Debug|Win32.Build.0 = Debug|Win32
 		{98A41E5F-1688-4AAB-8F17-A7C64725F242}.Release|Win32.ActiveCfg = Release|Win32
 		{98A41E5F-1688-4AAB-8F17-A7C64725F242}.Release|Win32.Build.0 = Release|Win32
-		EndGlobalSection
+		{DB2B29BD-18C6-412F-ABC6-98989E4EDBDE}.ChartCtrlLibS|Win32.ActiveCfg = ChartCtrlLibS|Win32
+		{DB2B29BD-18C6-412F-ABC6-98989E4EDBDE}.ChartCtrlLibS|Win32.Build.0 = ChartCtrlLibS|Win32
+		{DB2B29BD-18C6-412F-ABC6-98989E4EDBDE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DB2B29BD-18C6-412F-ABC6-98989E4EDBDE}.Debug|Win32.Build.0 = Debug|Win32
+		{DB2B29BD-18C6-412F-ABC6-98989E4EDBDE}.Release|Win32.ActiveCfg = Release|Win32
+		{DB2B29BD-18C6-412F-ABC6-98989E4EDBDE}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0D97301E-873B-479B-B9F2-9410CD97DE4D}
+	EndGlobalSection
 EndGlobal
-
-

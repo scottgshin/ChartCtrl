@@ -88,7 +88,7 @@ template<> struct CompileTimeError<true> {};
 // End of Andrei's code
 
 // List of 'lega'l PODs
-typedef TYPELIST_9(byte, short, unsigned short, int, unsigned 
+typedef TYPELIST_9(unsigned char, short, unsigned short, int, unsigned 
                     int, long, unsigned long, float, double) SL_TYPELIST;
 
 // Global Helper Functions

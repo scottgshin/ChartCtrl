@@ -145,7 +145,7 @@ void CDlgMisc::OnBnClickedLoad()
       {
         InitChartNamesListBox(mapCharts);
         string_t fileName = m_pathName;
-        size_t lastSlash = fileName.find_last_of(_T("\\")) + 1;
+        lastSlash = fileName.find_last_of(_T("\\")) + 1;
         fileName.erase(0, lastSlash);
         fileName = string_t(_T("Sel. file: ")) + fileName;
 
