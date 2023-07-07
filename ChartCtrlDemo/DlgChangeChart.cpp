@@ -38,8 +38,7 @@ void CDlgChange::DoDataExchange(CDataExchange* pDX)
   DDX_Control(pDX, IDC_CHANGE_SLPENW, m_slPenWidth);
   DDX_Control(pDX, IDC_CHANGE_SLTENSION, m_slTension);
   DDX_Control(pDX, IDC_CHANGE_EDCOLOR, m_edCols);
-  DDX_Control(pDX, IDC_LBNAMES, m_lbNames);
-  DDX_Control(pDX, IDC_CHANGE_EDNAME, m_edName);
+  DDX_Control(pDX, IDC_CHANGE_LBNAMES, m_lbNames);
 }
 
 
