@@ -5,6 +5,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "ChartDef.h"
+#include <filesystem>
 
 #pragma once
 
@@ -42,7 +43,8 @@ public:
     virtual ~CChartContainer();
 
 private:
-    CChartContainer(const CChartContainer& src);
+    CChartContainer(const CChartContainer& src) = delete;
+
 public:
     CChartContainer& operator =(const CChartContainer& rhs);
     bool CreateChartCtrlWnd(DWORD dwExStyle, DWORD dwStyle, const CRect& wndRect,
@@ -78,8 +80,8 @@ public:
     // Access functions: access to m_startX, m_endX, m_minExtY, m_maxExtY
     double GetStartX(void) const { return m_startX; }
     double GetEndX(void) const { return m_endX; }
-    double GetInitialStartX(void) const;  // Returns front of m_dqHist
-    double GetInitialEndX(void) const;    // or m_startX if there is no history
+    double GetInitialStartX(void) const;    // Returns front of m_dqHist
+    double GetInitialEndX(void) const;      // or m_startX if there is no history
     double GetInitialMinExtY(void) const;
     double GetInitialMaxExtY(void) const;
 
@@ -111,7 +113,7 @@ public:
     void SetDataViewChartIdx(int chartIdx) { m_dataViewChartIdx = chartIdx; }
     const MAP_SELPNTSD* GetDataViewSelPntsD(void) const { return &m_mapDataViewPntsD; }
     size_t SetDataViewSelPnts(int chartIdx, const MAP_SELPNTSD& mapSelPntsD,
-        V_CHARTDATAD* pChartData = NULL);
+        V_CHARTDATAD* pChartData = nullptr);
     bool ClearDataViewChartIdx(void);
 
     string_t GetContainerName(void) const { return m_name; }
@@ -288,6 +290,11 @@ public:
         DashStyle dashStyle, float penWidth, float tension,
         Color colChart, std::vector<double>& vX, std::vector<double>& vY,
         PointStyle pntStyle = PointStyle::Ellipse, bool bRedraw = false);
+    // Overload for vectors of time stamps and data
+    int AddChart(bool bVisible, bool bShowPnts, string_t label, string_t labelY, int precisionY,
+                 DashStyle dashStyle, float penWidth, float tension, Color colChart,
+                 std::vector<time_t>& vX, std::vector<double>& vY,
+                 PointStyle pntStyle = PointStyle::Ellipse, bool bRedraw = false);
 
     // Appends points to the end of chart data vector. Discards all new points with X < m_endX
     bool AppendChartData(int chartIdx, V_CHARTDATAD& vData, bool bUpdate = false);
@@ -331,7 +338,7 @@ public:
     bool IsLabWndVisible(bool bLeg) const;  // true - m_pLegWnd, false - m_pDataWnd
     bool IsLabWndExist(bool bLeg) const;    // same
     bool ShowAxisXBoundaries(bool bSet, bool bRedraw = false);
-    CDataWnd* ShowDataLegend(double dataLegX); // Uses m_dataLegPntD; it is supposed to be used only programmatically
+    CDataWnd* ShowDataLegend(double dataLegX); // Uses m_dataLegPntD it is supposed to be used only programmatically
     CDataWnd* ShowNamesLegend(void);
     bool ShowChartPoints(int chartIdx, bool bShow, bool bRedraw = false);
     bool ShowAxisCoordinates() { return m_use_coordinates; };
@@ -421,10 +428,7 @@ protected:
     void DrawGrid(RectF boundRF, PointF coordOrigF, Graphics* grPtr, float dpiRatio = 1.0f);
     void DrawGridWithCoordinates(RectF boundRF, PointF coordOrigF, Graphics* grPtr, float dpiRatio = 1.0f);
     void DrawContainerToBmp(Rect rGdi, Bitmap& clBmp);
-    // Doesn't work - shrinks the graph a little to make space for axis labels and makes the points
-    // and text fuzzy. Use with setXAxisLabel, setYAxisLabel, ShowXAxisLabel, ShowYAxisLabel
-    // GetClientRectBase, and GetClientRectAccountingForLabels.
-    void DrawAxisLabels(Rect yAxisLabelRect, Rect xAxisLabelRect, HDC hdc);//, float dpiRatio = 1.0f);
+    void DrawAxisLabels(Rect yAxisLabelRect, Rect xAxisLabelRect, HDC hdc);
 
     // Print's helpers
     TUPLE_PRNLEGLAYOUT CalcNamesPntLayout(RectF namesRF, const MAP_PRNDATA& mapPrnData,
@@ -451,19 +455,16 @@ public:
     bool YAxisIsLogarithmic() const { return m_y_axis_is_logarithmic; };
     bool XAxisIsLinear() const { return !m_x_axis_is_logarithmic; };
     bool YAxisIsLinear() const { return !m_y_axis_is_logarithmic; };
-    // Doesn't work - shrinks the graph a little to make space for axis labels and makes the points
-    // and text fuzzy. Use with setXAxisLabel, setYAxisLabel, ShowXAxisLabel, ShowYAxisLabel
-    // GetClientRectBase, GetClientRectAccountingForLabels, and DrawAxisLabels.
-    void setYAxisLabel(string_t label = _T("")) { m_y_axis_label = label; m_showYLabel = true; };
+    void setYAxisLabel(string_t label = string_t(_T("")));
     void ShowXAxisLabel(bool show = true) { m_showXLabel = show; };
     void ShowYAxisLabel(bool show = true) { m_showYLabel = show; };
-    void SetImagePath(string_t path) { m_image_path = path; };
-    void setShowYAxisSecondScale(bool enable) { m_show_y_axis_second_scale = enable; };
+    // This functionality needed to be moved into the .cpp to remove runtime exceptions upon destruction.
+    void SetImagePath(std::filesystem::path path); //{ m_image_path = path; };
+    void setShowYAxisSecondScale(bool show_second_scale); //{ m_show_y_axis_second_scale = show_second_scale; };
     bool ShowYAxisSecondScale() const { return m_show_y_axis_second_scale; };
     void MoveLegend(LegendLocation loc) { m_legendLocation = loc; };
     LegendLocation getLegendLocation() const { return m_legendLocation; };
     void GetClientRectBase(LPRECT lpRect) const;
-    //void GetClientRect(LPRECT lpRect);
     void GetClientRectAccountingForLabels(LPRECT lpRect);
 
 protected:
@@ -587,6 +588,7 @@ protected:
     LegendLocation m_legendLocation = LegendLocation::Upper_Right;
     string_t m_x_axis_label = string_t(_T(""));
     string_t m_y_axis_label = string_t(_T(""));
-    string_t m_image_path = string_t(_T(""));
+    std::filesystem::path m_image_path = string_t(_T(""));
+    std::filesystem::path junk_needed_to_make_m_image_path_work_possible_problem_with_compiler = string_t(_T(""));
 };
 

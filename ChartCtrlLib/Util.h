@@ -138,6 +138,35 @@ inline Color SetAlpha(const Color color, int alpha)
 }
 
 
+//
+// Methods to add functionality to the GDI+ functionality - SGS
+//
+// This method will check to see if the coord string has \n's and correct for that.
+Status MeasureString(Graphics* grPtr, IN const string_t string, IN INT length,
+                     IN const Gdiplus::Font* font, IN const RectF& layoutRect,
+                     OUT RectF* boundingBox);
+// This method will check to see if the coord string has \n's and correct for that.
+Status MeasureString(Graphics* grPtr, IN const string_t string, IN INT length,
+                     IN const Gdiplus::Font* font, IN const PointF& layoutPoint,
+                     OUT RectF* boundingBox);
+
+// This method will check to see if the coord string has \n's and correct for that.
+size_t StringLength(const string_t str);
+
+// Method to remove the #ifdefs for UNICODE or MBCS everywhere prior to calling DrawString
+Status DrawString(Graphics* grPtr, const string_t string, INT length, const Gdiplus::Font* font,
+                  const PointF& origin, const Brush* brush);
+
+// Method to remove the #ifdefs for UNICODE or MBCS everywhere prior to calling DrawString
+Status DrawString(Graphics* grPtr, IN const string_t string, IN INT length,
+                  IN const Gdiplus::Font* font, IN const RectF& layoutRect,
+                  IN const StringFormat* stringFormat, IN const Brush* brush);
+
+// Add bounds checking to the rectangle
+void BoundsCheckRectangle(Gdiplus::RectF& rect, const double x_min, const double x_max,
+                          const double y_min, const double y_max);
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // Predicates
 
@@ -454,12 +483,7 @@ struct get_max_str
         RectF rF;
         PointF pntF(0.0f, 0.0f);
         string_t str = get<Idx>(t);
-#ifdef _UNICODE
-        _grPtr->MeasureString(str.c_str(), -1, _pFont, pntF, &rF);
-#else if _MBCS
-        USES_CONVERSION;
-        _grPtr->MeasureString(CA2W(str.c_str()), -1, _pFont, pntF, &rF);
-#endif
+        MeasureString(_grPtr, str, -1, _pFont, pntF, &rF);
         if (rF.Width > _maxRF.Width)
             _maxRF = rF;
     }
@@ -477,12 +501,7 @@ struct get_max_str <string_t, Idx>
     {
         RectF rF;
         PointF pntF(0.0f, 0.0f);
-#ifdef _UNICODE
-        _grPtr->MeasureString(str.c_str(), -1, _pFont, pntF, &rF);
-#else if _MBCS
-        USES_CONVERSION;
-        _grPtr->MeasureString(CA2W(str.c_str()), -1, _pFont, pntF, &rF);
-#endif
+        MeasureString(_grPtr, str, -1, _pFont, pntF, &rF);
         if (rF.Width > _maxRF.Width)
             _maxRF = rF;
     }

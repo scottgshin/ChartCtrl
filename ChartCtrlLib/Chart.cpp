@@ -4,7 +4,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "ChartDef.h"
 #include "DataLabel.h"
 #include "Chart.h"
@@ -35,6 +35,7 @@ m_pLabYValStrFn(&GetLabelValStr)
 
 CChart::~CChart(void)
 {
+    m_pLabYValStrFn = nullptr;
 }
 
 CChart* CChart::CloneChart(bool bCloneState)
@@ -67,7 +68,8 @@ CChart* CChart::CloneChart(bool bCloneState)
     chartPtr->m_pntStyle = m_pntStyle;
     chartPtr->m_fPenWidth = m_fPenWidth;
     chartPtr->m_fTension = m_fTension;
-
+    chartPtr->m_pntStyle = m_pntStyle;
+    
     chartPtr->m_fMinValX = m_fMinValX;
     chartPtr->m_fMaxValX = m_fMaxValX;
     chartPtr->m_fMinValY = m_fMinValY;

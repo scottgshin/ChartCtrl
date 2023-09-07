@@ -176,12 +176,12 @@ CRect CDataWnd::CalcNameWndRect(CRect labStrRect, CWnd* pParent, LegendLocation 
     case LegendLocation::Lower_Left:
         origPnt = CPoint(clRect.left, clRect.bottom);
         wndRect.OffsetRect(origPnt.x, origPnt.y);
-        wndRect.OffsetRect(30, -wndRect.Height() - 22);
+        wndRect.OffsetRect(30, -wndRect.Height() - 30);
         break;
     case LegendLocation::Lower_Right:
         origPnt = CPoint(clRect.right, clRect.bottom);
         wndRect.OffsetRect(origPnt.x, origPnt.y);
-        wndRect.OffsetRect(-wndRect.Width() - 30, -wndRect.Height() - 22);
+        wndRect.OffsetRect(-wndRect.Width() - 30, -wndRect.Height() - 30);
         break;
     }
 
@@ -340,49 +340,27 @@ float CDataWnd::DrawLabel(const TUPLE_LABEL& tupleLabel, RectF labRect, Gdiplus:
     maxNameYRF.Offset(labRect.X, labRect.Y);
     maxValYRF.Offset(labRect.X, labRect.Y);
     PointF strOrigF(maxNameRF.X, labRect.Y);
-#ifdef _UNICODE
-    grPtr->DrawString(nameStr.c_str(), -1, pFont, strOrigF, &lbBr);
-#else if _MBCS
-    USES_CONVERSION;
-    grPtr->DrawString(CA2W(nameStr.c_str()), -1, pFont, strOrigF, &lbBr);
-#endif
+    DrawString(grPtr, nameStr, -1, pFont, strOrigF, &lbBr);
 
     if (m_bData)
     {
         if (!nameXStr.empty())
         {
             strOrigF.X = maxNameXRF.X;
-#ifdef _UNICODE
-            grPtr->DrawString(nameXStr.c_str(), -1, pFont, strOrigF, &lbBr);
-#else if _MBCS
-            grPtr->DrawString(CA2W(nameXStr.c_str()), -1, pFont, strOrigF, &lbBr);
-#endif
+            DrawString(grPtr, nameXStr, -1, pFont, strOrigF, &lbBr);
         }
 
         strOrigF.X = maxValXRF.X;
-#ifdef _UNICODE
-        grPtr->DrawString(valXStr.c_str(), -1, pFont, strOrigF, &lbBr);
-#else if _MBCS
-        grPtr->DrawString(CA2W(valXStr.c_str()), -1, pFont, strOrigF, &lbBr);
-#endif
+        DrawString(grPtr, valXStr, -1, pFont, strOrigF, &lbBr);
 
         if (!nameYStr.empty())
         {
             strOrigF.X = maxNameYRF.X;
-#ifdef _UNICODE
-            grPtr->DrawString(nameYStr.c_str(), -1, pFont, strOrigF, &lbBr);
-#else if _MBCS
-            grPtr->DrawString(CA2W(nameYStr.c_str()), -1, pFont, strOrigF, &lbBr);
-#endif
+            DrawString(grPtr, nameYStr, -1, pFont, strOrigF, &lbBr);
         }
 
         strOrigF.X = maxValYRF.X;
-#ifdef _UNICODE
-        grPtr->DrawString(valYStr.c_str(), -1, pFont, strOrigF, &lbBr);
-#else if _MBCS
-        grPtr->DrawString(CA2W(valYStr.c_str()), -1, pFont, strOrigF, &lbBr);
-#endif
-
+        DrawString(grPtr, valYStr, -1, pFont, strOrigF, &lbBr);
     }
     return labRect.Height;
 }
