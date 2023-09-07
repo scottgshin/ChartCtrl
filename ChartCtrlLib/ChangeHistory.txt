@@ -7,6 +7,37 @@ Look into making the application DPI aware (https://mariusbancila.ro/blog/2021/0
 This could be the solution to adding the axis labels to the window by fixing the blurring when scaled down.
 
 
+
+Latest Code hosted on github
+https://github.com/scottgshin/ChartCtrl
+
+
+20230802
+Version 1.2.23213.27
+Compiles with Visual Studio 2022 (17.7.3)
+1.) Fix: Problems with functions in the ChartContainer.h file not working when debugging and causing exceptions. 
+    Is this a MBCS versus UNICODE issue or an visual studio 2023. It works without exception for KzComm (UNICODE) 
+	but not for KzComm.dll (MBCS).
+	a.) Add std::filesystem::path junk_needed_to_make_m_image_path_work_possible_problem_with_compiler to allow m_image_path to work.
+	b.) Move the function definition on SetImagePath and setShowYAxisSecondScale to the cpp to correct compiler exceptions upon destruction.
+2.) New MeasureString that handles points instead of rectangles to reduce the number of ifdefs for UNICODE vs MBCS.
+3.) Move the legend to slightly above the older position when in the lower corners.
+4.) Remove commented out code and comments.
+5.) Use nullptr instead of NULL.
+
+
+
+20230630
+Version 1.2.23211.3
+1.) Fix: 1st Y-Axis labels must use the Charts string function pointer instead of using the X-Axis label function. 
+2.) Fix: Must pass the 0 (linear), or 1 (logrithmic) to the X-Axis string function instead of bypassing the function.
+3.) Create functions, MeasureString and StringLength, to measure string length correctly when a newline is within the axis label string.
+4.) Create DrawString function to handle the UNICODE vs MBCS check and converstion for the GDI+ DrawString function.
+5.) Create new AddChart overload function to accept a time_t vector for X.
+6.) Create a new function to validate dimensions fo the rectangle, BoundsCheckRectangle. 
+
+
+
 20230216
 Version 1.2.23023.0
 1.) Allow curve names of total length of 40 instead of 18 before truncating.

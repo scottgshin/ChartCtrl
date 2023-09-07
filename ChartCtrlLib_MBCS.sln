@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34024.191
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChartCtrlLib_MultiByte", "ChartCtrlLib\ChartCtrlLib_MultiByte.vcxproj", "{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MBCS_Demo", "MBCS_Demo\MBCS_Demo.vcxproj", "{F9720409-1B0C-4404-95EF-4F728555D3BE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A} = {C6A114F3-70A1-40DE-B665-2A6F9BF4685A}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Debug|x64.ActiveCfg = Debug|x64
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Debug|x64.Build.0 = Debug|x64
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Debug|x86.ActiveCfg = Debug|Win32
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Debug|x86.Build.0 = Debug|Win32
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Release|x64.ActiveCfg = Release|x64
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Release|x64.Build.0 = Release|x64
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Release|x86.ActiveCfg = Release|Win32
+		{C6A114F3-70A1-40DE-B665-2A6F9BF4685A}.Release|x86.Build.0 = Release|Win32
+		{F9720409-1B0C-4404-95EF-4F728555D3BE}.Debug|x64.ActiveCfg = Debug|x64
+		{F9720409-1B0C-4404-95EF-4F728555D3BE}.Debug|x64.Build.0 = Debug|x64
+		{F9720409-1B0C-4404-95EF-4F728555D3BE}.Debug|x86.ActiveCfg = Debug|Win32
+		{F9720409-1B0C-4404-95EF-4F728555D3BE}.Debug|x86.Build.0 = Debug|Win32
+		{F9720409-1B0C-4404-95EF-4F728555D3BE}.Release|x64.ActiveCfg = Release|x64
+		{F9720409-1B0C-4404-95EF-4F728555D3BE}.Release|x64.Build.0 = Release|x64
+		{F9720409-1B0C-4404-95EF-4F728555D3BE}.Release|x86.ActiveCfg = Release|Win32
+		{F9720409-1B0C-4404-95EF-4F728555D3BE}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {513D6EAD-11BC-4190-869D-DA786D168AB4}
+	EndGlobalSection
+EndGlobal

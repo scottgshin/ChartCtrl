@@ -936,11 +936,7 @@ void CChartDataView::ShowWaitMessage(int chartIdx, size_t newSize)
         SolidBrush bkBr((ARGB)Color::White);
         gr.FillRectangle(&bkBr, boundingRect);
         SolidBrush br((ARGB)Color::Red);
-#ifdef _UNICODE
-        gr.DrawString(_T("Calculating Layout"), -1, &headerFont, boundingRect, &strFormat, &br);
-#else if _MBCS
-        gr.DrawString(CA2W("Calculating Layout"), -1, &headerFont, boundingRect, &strFormat, &br);
-#endif
+        DrawString(&gr, string_t(_T("Calculating Layout")), -1, &headerFont, boundingRect, &strFormat, &br);
     }
 }
 
@@ -959,19 +955,11 @@ void CChartDataView::DrawPageHeader(float offsetX, Graphics* grPtr, size_t pageN
     SolidBrush txtBr(m_textColor);
     RectF headerRF = m_headerRF;
     headerRF.Offset(offsetX, 0.0f);
-#ifdef _UNICODE
-    grPtr->DrawString(m_header.c_str(), -1, &headerFont, headerRF, &strFormat, &txtBr);
-#else if _MBCS
-    grPtr->DrawString(CA2W(m_header.c_str()), -1, &headerFont, headerRF, &strFormat, &txtBr);
-#endif
+    DrawString(grPtr, m_header, -1, &headerFont, headerRF, &strFormat, &txtBr);
     sstream_t stream;
     stream << _T("Page ") << pageNmb << _T(" of ") << m_nPages;
     strFormat.SetAlignment(StringAlignmentNear);
-#ifdef _UNICODE
-    grPtr->DrawString(stream.str().c_str(), -1, &headerFont, headerRF, &strFormat, &txtBr);
-#else if _MBCS
-    grPtr->DrawString(CA2W(stream.str().c_str()), -1, &headerFont, headerRF, &strFormat, &txtBr);
-#endif
+    DrawString(grPtr, stream.str(), -1, &headerFont, headerRF, &strFormat, &txtBr);
 }
 
 float CChartDataView::DrawTableHeader(float offsetX, float offsetY, Graphics* grPtr, float dpiRatio)
@@ -1006,21 +994,13 @@ float CChartDataView::DrawTableHeader(float offsetX, float offsetY, Graphics* gr
         grPtr->DrawRectangle(&cellPen, dataXRF);
         RectF textRF(dataXRF);
         textRF.Width -= m_dpiRatio * DATA_ENDOFFS;
-#ifdef _UNICODE
-        grPtr->DrawString(m_labelX.c_str(), -1, &txtFont, textRF, &strFormat, &cellBr);
-#else if _MBCS
-        grPtr->DrawString(CA2W(m_labelX.c_str()), -1, &txtFont, textRF, &strFormat, &cellBr);
-#endif
+        DrawString(grPtr, m_labelX, -1, &txtFont, textRF, &strFormat, &cellBr);
         dataXRF.Offset(deltaX, 0.0f);
 
         grPtr->DrawRectangle(&cellPen, dataYRF);
         textRF = dataYRF;
         textRF.Width -= m_dpiRatio * DATA_ENDOFFS;
-#ifdef _UNICODE
-        grPtr->DrawString(m_labelY.c_str(), -1, &txtFont, textRF, &strFormat, &cellBr);
-#else if _MBCS
-        grPtr->DrawString(CA2W(m_labelY.c_str()), -1, &txtFont, textRF, &strFormat, &cellBr);
-#endif
+        DrawString(grPtr, m_labelY, -1, &txtFont, textRF, &strFormat, &cellBr);
         dataYRF.Offset(deltaX, 0.0f);
     }
 
@@ -1090,33 +1070,21 @@ size_t CChartDataView::DrawDataPage(size_t dataStartID, float tableOffsX, float 
             grPtr->DrawRectangle(&cellPen, nmbRF);
             RectF txtRF = nmbRF;
             txtRF.Width -= txtEndOffsX;
-#ifdef _UNICODE
-            grPtr->DrawString(nmbStr.c_str(), -1, &txtFont, txtRF, &strFormat, &cellBr);
-#else if _MBCS
-            grPtr->DrawString(CA2W(nmbStr.c_str()), -1, &txtFont, txtRF, &strFormat, &cellBr);
-#endif
+            DrawString(grPtr, nmbStr, -1, &txtFont, txtRF, &strFormat, &cellBr);
             nmbRF.Offset(0.0, m_deltaY);
 
             string_t valXStr = m_vStrX[rowID];
             grPtr->DrawRectangle(&cellPen, dataXRF);
             txtRF = dataXRF;
             txtRF.Width -= txtEndOffsX;
-#ifdef _UNICODE
-            grPtr->DrawString(valXStr.c_str(), -1, &txtFont, txtRF, &strFormat, &cellBr);
-#else if _MBCS
-            grPtr->DrawString(CA2W(valXStr.c_str()), -1, &txtFont, txtRF, &strFormat, &cellBr);
-#endif
+            DrawString(grPtr, valXStr, -1, &txtFont, txtRF, &strFormat, &cellBr);
             dataXRF.Offset(0.0f, m_deltaY);
 
             string_t valYStr = m_vStrY[rowID];
             grPtr->DrawRectangle(&cellPen, dataYRF);
             txtRF = dataYRF;
             txtRF.Width -= txtEndOffsX;
-#ifdef _UNICODE
-            grPtr->DrawString(valYStr.c_str(), -1, &txtFont, txtRF, &strFormat, &cellBr);
-#else if _MBCS
-            grPtr->DrawString(CA2W(valYStr.c_str()), -1, &txtFont, txtRF, &strFormat, &cellBr);
-#endif
+            DrawString(grPtr, valYStr, -1, &txtFont, txtRF, &strFormat, &cellBr);
             dataYRF.Offset(0.0f, m_deltaY);
             ++rowID;
         }

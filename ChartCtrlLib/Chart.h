@@ -146,8 +146,8 @@ protected:
     int m_precisionY = 3;   // Precision of Y-axis
     double m_fLocScaleY = 1.0;  // Additional PointD.Y multiplier; normally 1.0
 
-    string_t m_label = _T("");     // Chart's Name
-    string_t m_labelY = _T("Y");   // Y-axis unit name
+    string_t m_label = string_t(_T(""));     // Chart's Name
+    string_t m_labelY = string_t(_T("Y"));   // Y-axis unit name
     val_label_str_fn m_pLabYValStrFn;  // Pointer to the Y-value string generator
     PointStyle m_pntStyle = PointStyle::Ellipse;
 
